@@ -1,0 +1,25 @@
+<tool id='User.Demo_say_hello' name='User.Demo_say_hello'>
+  <command interpreter='bash'>002_double_resource_command/main.sh</command>
+  <inputs>
+    <param 
+        name='command' 
+        label='Command' 
+        type='text' 
+        value='hostname' 
+        help='Type in the command to run on the remote resource' 
+        width='50%_none'
+    ></param>
+    <param name='resource_1' 
+        type='computeResource' 
+        label='Resource' 
+        help='Select a resource to run the command'
+    ></param>
+    <param name='resource_2' 
+        type='computeResource' 
+        label='Resource' 
+        help='Select a resource to run the command'
+    ></param>
+  </inputs>
+  <outputs>
+  </outputs>
+</tool>

@@ -1,0 +1,29 @@
+<tool id='User.Demo_say_hello' name='User.Demo_say_hello'>
+  <command interpreter='bash'>003_cancel_job/main.sh</command>
+  <cancel interpreter='bash'>kill.sh</cancel>
+  <inputs>
+    <param 
+        name='command' 
+        label='Command' 
+        type='text' 
+        value='sleep 300' 
+        help='Type in the command to run on the remote resource' 
+        width='50%_none'
+    ></param>
+    <param 
+        name='chdir' 
+        label='Resource work directory' 
+        type='text' 
+        value='' 
+        help='Absolute path to the work directory on the remote resource. If left empty the default work directory for the resource is used.' 
+        width='50%_none'
+    ></param>
+    <param name='resource_1' 
+        type='computeResource' 
+        label='Resource' 
+        help='Select a resource to run the command'
+    ></param>
+  </inputs>
+  <outputs>
+  </outputs>
+</tool>
