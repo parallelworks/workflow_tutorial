@@ -7,7 +7,7 @@ fi
 
 sshcmd="ssh -o StrictHostKeyChecking=no ${resource_1_username}@${resource_1_publicIp}"
 
-echo; echo "Writing SLURM script <demo.sbatch>"
+echo; echo "Writing SLURM script [demo.sbatch]"
 cat >> demo.sbatch <<HERE
 #!/bin/bash
 #SBATCH --job-name=demo
@@ -19,13 +19,13 @@ HERE
 chmod +x demo.sbatch
 cat demo.sbatch
 
-echo; echo "Creating remote directory <${resource_1_username}@${resource_1_publicIp}:${chdir}"
+echo; echo "Creating remote directory [${resource_1_username}@${resource_1_publicIp}:${chdir}]"
 ${sshcmd} "mkdir -p ${chdir}"
 
-echo; echo "Copying SLURM script <demo.sbatch> to <${resource_1_username}@${resource_1_publicIp}:${chdir}/>"
+echo; echo "Copying SLURM script [demo.sbatch] to [${resource_1_username}@${resource_1_publicIp}:${chdir}/]"
 scp demo.sbatch ${resource_1_username}@${resource_1_publicIp}:${chdir}/
 
-echo; echo "Submiting SLURM job with command <${sshcmd} \"sbatch ${chdir}/demo.sbatch\">"
+echo; echo "Submiting SLURM job with command [${sshcmd} \"sbatch ${chdir}/demo.sbatch\"]"
 slurm_job=$($sshcmd "sbatch ${chdir}/demo.sbatch" | tail -1 | awk -F ' ' '{print $4}')
 
 echo; echo "Creating kill script"
@@ -35,7 +35,7 @@ HERE
 chmod +x kill.sh
 cat kill.sh
 
-echo; echo "Monitoring job <${slurm_job}>"
+echo; echo "Monitoring job [${slurm_job}]"
 while true; do
     sj_status=$($sshcmd squeue -j ${slurm_job} | tail -n+2 | awk '{print $5}')
     echo "    $(date): Status ${sj_status}"
@@ -43,7 +43,7 @@ while true; do
         # Job is no longer running
         sj_status=$($sshcmd sacct -j ${slurm_job}  --format=state | tail -n1 | tr -d ' ')
         if [[ "${sj_status}" == "FAILED" ]]; then
-            echo "ERROR: SLURM job <${slurm_job}> failed"
+            echo "ERROR: SLURM job [${slurm_job}] failed"
             exit 1
         else
             exit 0
