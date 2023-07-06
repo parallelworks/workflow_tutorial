@@ -28,7 +28,7 @@ scp demo.sbatch ${resource_1_username}@${resource_1_publicIp}:${chdir}/
 echo; echo "Submiting SLURM job with command [${sshcmd} \"sbatch ${chdir}/demo.sbatch\"]"
 slurm_job=$($sshcmd "sbatch ${chdir}/demo.sbatch" | tail -1 | awk -F ' ' '{print $4}')
 
-echo; echo "Creating kill script"
+echo; echo "Creating kill script for slurm job [${slurm_job}]"
 cat >> kill.sh <<HERE
 $sshcmd "scancel ${slurm_job}"
 HERE
