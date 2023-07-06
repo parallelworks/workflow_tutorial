@@ -86,7 +86,7 @@
                 width='50%_none'
             ></param>
             <param 
-                name='scheduler_directives' 
+                name='slurm_scheduler_directives' 
                 label='Scheduler directives' 
                 type='text' 
                 help='e.g. --mem=1000;--gpus-per-node=1 - Use the semicolon character ; to separate parameters. Do not include the SBATCH keyword.' 
@@ -102,7 +102,7 @@
                 value='' 
             ></param>
             <param 
-                name='scheduler_directives' 
+                name='pbs_scheduler_directives' 
                 label='Scheduler directives' 
                 type='text' 
                 help='e.g. -l mem=1000;-l nodes=1:ppn=4 - Use the semicolon character ; to separate parameters. Do not include the PBS keyword.' 
