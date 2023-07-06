@@ -7,14 +7,15 @@
         type='text' 
         value='hostname' 
         help='Type in the command to run on the remote resource' 
-        width='50%_none'
     ></param>
-    <param name='resource_1' 
+    <param 
+        name='resource_1' 
         type='computeResource' 
         label='Resource' 
         help='Select a resource to run the command'
     ></param>
-    <param name='resource_2' 
+    <param 
+        name='resource_2' 
         type='computeResource' 
         label='Resource' 
         help='Select a resource to run the command'
