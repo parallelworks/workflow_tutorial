@@ -1,0 +1,92 @@
+<tool id='Matthew.Shaxted_interactive_session' name='Matthew.Shaxted_interactive_session'>
+  <command interpreter='bash'>005_resource_input_wrapper/main.sh</command>
+  <inputs>
+    <section name='pwrl_host1' type='section' title='Host 1' expanded='true'>
+      <param name='nports' label='Number of Ports to Reserve' type='hidden' value='2' width='50%_none'></param>
+      <param name='resource' type='computeResource' label='Service host' hideUserWorkspace='true' help='Resource to host the service'></param>
+      <conditional name="jobschedulertype_cond">
+          <param name='jobschedulertype' type='select' label='Select Controller, SLURM Partition or PBS Queue' help='Job will submitted using SSH, sbatch or qsub, respectively' width='50%_none' multiple='false'>
+            <option value="CONTROLLER">Controller</option>
+            <option value="SLURM" selected="true">SLURM Partition</option>
+            <option value="PBS">PBS Queue</option>
+        </param>
+        <when value="SLURM">
+            <param name='_sch__dd_partition_e_' label='SLURM partition' type='text' help='Partition to submit the interactive job. Leave empty to let SLURM pick the optimal option.' value='' width='50%_none'>
+            </param>
+            <param name='_sch__dd_cpus_d_per_d_task_e_' label='CPUs per task' type='integer' min="1" max="10" help='--cpus-per-task=value slurm directive' value='1' width='50%_none'>
+            </param>
+            <param name='_sch__dd_mem_d_per_d_cpu_e_' label='Minimum memory required per usable allocated CPU' type='text' help='--mem-per-cpu=value slurm directive' value='8G' width='50%_none'>
+            </param>   
+            <param name='_sch__dd_time_e_' label='Walltime' type='text' help='e.g. 01:00:00 - Amount of time slurm will honor the interactive session.' value='01:00:00' width='50%_none'>
+            </param>
+            <param name='scheduler_directives' label='Scheduler directives' type='text' help='e.g. --mem=1000;--gpus-per-node=1 - Use the semicolon character ; to separate parameters. Do not include the SBATCH keyword.' value='' width='100%_none'>
+            </param>
+        </when>
+        <when value="PBS">
+            <param name='_sch__d_q___' label='PBS queue' type='text' help='Queue to submit the interactive job. Must select one! Use [qstat -f -Q] to list all queues on the system' value='' width='50%_none'>
+            </param>
+            <param name='scheduler_directives' label='Scheduler directives' type='text' help='e.g. -l mem=1000;-l nodes=1:ppn=4 - Use the semicolon character ; to separate parameters. Do not include the PBS keyword.' value='-l walltime=01:00:00;-l nodes=1' width='100%_none'>
+            </param>
+        </when>
+      </conditional>
+    </section>
+    <section name='pwrl_host2' type='section' title='Host 2' expanded='true'>
+      <param name='resource' type='computeResource' label='Service host' hideUserWorkspace='true' help='Resource to host the service'></param>
+      <conditional name="jobschedulertype_cond">
+          <param name='jobschedulertype' type='select' label='Select Controller, SLURM Partition or PBS Queue' help='Job will submitted using SSH, sbatch or qsub, respectively' width='50%_none' multiple='false'>
+            <option value="CONTROLLER">Controller</option>
+            <option value="SLURM" selected="true">SLURM Partition</option>
+            <option value="PBS">PBS Queue</option>
+        </param>
+        <when value="SLURM">
+            <param name='_sch__dd_partition_e_' label='SLURM partition' type='text' help='Partition to submit the interactive job. Leave empty to let SLURM pick the optimal option.' value='' width='50%_none'>
+            </param>
+            <param name='_sch__dd_cpus_d_per_d_task_e_' label='CPUs per task' type='integer' min="1" max="10" help='--cpus-per-task=value slurm directive' value='1' width='50%_none'>
+            </param>
+            <param name='_sch__dd_mem_d_per_d_cpu_e_' label='Minimum memory required per usable allocated CPU' type='text' help='--mem-per-cpu=value slurm directive' value='8G' width='50%_none'>
+            </param>   
+            <param name='_sch__dd_time_e_' label='Walltime' type='text' help='e.g. 01:00:00 - Amount of time slurm will honor the interactive session.' value='01:00:00' width='50%_none'>
+            </param>
+            <param name='scheduler_directives' label='Scheduler directives' type='text' help='e.g. --mem=1000;--gpus-per-node=1 - Use the semicolon character ; to separate parameters. Do not include the SBATCH keyword.' value='' width='100%_none'>
+            </param>
+        </when>
+        <when value="PBS">
+            <param name='_sch__d_q___' label='PBS queue' type='text' help='Queue to submit the interactive job. Must select one! Use [qstat -f -Q] to list all queues on the system' value='' width='50%_none'>
+            </param>
+            <param name='scheduler_directives' label='Scheduler directives' type='text' help='e.g. -l mem=1000;-l nodes=1:ppn=4 - Use the semicolon character ; to separate parameters. Do not include the PBS keyword.' value='-l walltime=01:00:00;-l nodes=1;-l naccesspolicy=SINGLEJOB -n' width='100%_none'>
+            </param>
+        </when>
+      </conditional>
+      </section>
+      <section name='pwrl_host3' type='section' title='Host 3' expanded='true'>
+      <param name='resource' type='computeResource' label='Service host' hideUserWorkspace='true' help='Resource to host the service'></param>
+      <conditional name="jobschedulertype_cond">
+          <param name='jobschedulertype' type='select' label='Select Controller, SLURM Partition or PBS Queue' help='Job will submitted using SSH, sbatch or qsub, respectively' width='50%_none' multiple='false'>
+            <option value="CONTROLLER">Controller</option>
+            <option value="SLURM" selected="true">SLURM Partition</option>
+            <option value="PBS">PBS Queue</option>
+        </param>
+        <when value="SLURM">
+            <param name='_sch__dd_partition_e_' label='SLURM partition' type='text' help='Partition to submit the interactive job. Leave empty to let SLURM pick the optimal option.' value='' width='50%_none'>
+            </param>
+            <param name='_sch__dd_cpus_d_per_d_task_e_' label='CPUs per task' type='integer' min="1" max="10" help='--cpus-per-task=value slurm directive' value='1' width='50%_none'>
+            </param>
+            <param name='_sch__dd_mem_d_per_d_cpu_e_' label='Minimum memory required per usable allocated CPU' type='text' help='--mem-per-cpu=value slurm directive' value='8G' width='50%_none'>
+            </param>   
+            <param name='_sch__dd_time_e_' label='Walltime' type='text' help='e.g. 01:00:00 - Amount of time slurm will honor the interactive session.' value='01:00:00' width='50%_none'>
+            </param>
+            <param name='scheduler_directives' label='Scheduler directives' type='text' help='e.g. --mem=1000;--gpus-per-node=1 - Use the semicolon character ; to separate parameters. Do not include the SBATCH keyword.' value='' width='100%_none'>
+            </param>
+        </when>
+        <when value="PBS">
+            <param name='_sch__d_q___' label='PBS queue' type='text' help='Queue to submit the interactive job. Must select one! Use [qstat -f -Q] to list all queues on the system' value='' width='50%_none'>
+            </param>
+            <param name='scheduler_directives' label='Scheduler directives' type='text' help='e.g. -l mem=1000;-l nodes=1:ppn=4 - Use the semicolon character ; to separate parameters. Do not include the PBS keyword.' value='-l walltime=01:00:00;-l nodes=1;-l naccesspolicy=SINGLEJOB -n' width='100%_none'>
+            </param>
+        </when>
+      </conditional>
+    </section>
+  </inputs>
+  <outputs>
+  </outputs>
+</tool>
