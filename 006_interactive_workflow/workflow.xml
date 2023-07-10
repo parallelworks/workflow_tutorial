@@ -1,5 +1,5 @@
 <tool id='User.Demo_say_hello' name='User.Demo_say_hello'>
-  <command interpreter='bash'>main.sh</command>
+  <command interpreter='bash'>006_interactive_workflow/main.sh</command>
   <cancel interpreter='bash'>kill.sh</cancel>
   <inputs>
   </inputs>
