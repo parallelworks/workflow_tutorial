@@ -1,0 +1,63 @@
+<tool id='User.Demo_say_hello' name='User.Demo_say_hello'>
+  <command interpreter='bash'>main.sh</command>
+  <cancel interpreter='bash'>kill.sh</cancel>
+  <inputs>
+    <param 
+        name='command' 
+        label='Command to Run' 
+        type='text' 
+        value='hostname' 
+        help='Type in the command to run on the remote resource' 
+    ></param>
+  <section name='pwrl_main' type='section' title='Main Host' expanded='true'>
+      <param name='resource' type='computeResource' label='Service host' hideUserWorkspace='true' help='Resource to host the service'></param>
+      <param 
+        name='max_time' 
+        label='Maximum Time' 
+        type='text' 
+        value='300' 
+        help='The command is canceled if it is not completed within this time limit after submission to the resource' 
+      ></param>
+      <conditional name="jobschedulertype_cond">
+          <param name='jobschedulertype' type='select' label='Select Controller, SLURM Partition or PBS Queue' help='Job will submitted using SSH, sbatch or qsub, respectively' width='50%_none' multiple='false'>
+            <option value="SLURM" selected="true">SLURM Partition</option>
+            <option value="PBS">PBS Queue</option>
+        </param>
+        <when value="SLURM">
+            <param name='scheduler_directives_slurm' label='Scheduler directives' type='text' help='e.g. --partition=compute;--tasks-per-node=1 - Use the semicolon character ; to separate parameters. Do not include the SBATCH keyword.' value='' width='100%_none'>
+            </param>
+        </when>
+        <when value="PBS">
+            <param name='scheduler_directives_pbs' label='Scheduler directives' type='text' help='e.g. -l mem=1000;-l nodes=1:ppn=4 - Use the semicolon character ; to separate parameters. Do not include the PBS keyword.' value='-q debug; -l walltime=00:10:00' width='100%_none'>
+            </param>
+        </when>
+      </conditional>
+    </section>
+    <section name='pwrl_burst' type='section' title='Burst Host' expanded='true'>
+      <param name='resource' type='computeResource' label='Service host' hideUserWorkspace='true' help='Resource to host the service'></param>
+      <param 
+        name='max_time' 
+        label='Maximum Time' 
+        type='text' 
+        value='300' 
+        help='The command is canceled if it is not completed within this time limit after submission to the resource' 
+      ></param>
+      <conditional name="jobschedulertype_cond">
+          <param name='jobschedulertype' type='select' label='Select Controller, SLURM Partition or PBS Queue' help='Job will submitted using SSH, sbatch or qsub, respectively' width='50%_none' multiple='false'>
+            <option value="SLURM" selected="true">SLURM Partition</option>
+            <option value="PBS">PBS Queue</option>
+        </param>
+        <when value="SLURM">
+            <param name='scheduler_directives_slurm' label='Scheduler directives' type='text' help='e.g. --partition=compute;--tasks-per-node=1 - Use the semicolon character ; to separate parameters. Do not include the SBATCH keyword.' value='' width='100%_none'>
+            </param>
+        </when>
+        <when value="PBS">
+            <param name='scheduler_directives_pbs' label='Scheduler directives' type='text' help='e.g. -l mem=1000;-l nodes=1:ppn=4 - Use the semicolon character ; to separate parameters. Do not include the PBS keyword.' value='-q debug; -l walltime=00:10:00' width='100%_none'>
+            </param>
+        </when>
+      </conditional>
+      </section>
+  </inputs>
+  <outputs>
+  </outputs>
+</tool>
