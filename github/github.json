@@ -1,7 +1,0 @@
-{
-  "repo": "https://github.com/parallelworks/simple_bash_demo.git",
-  "branch": "main",
-  "xml": "001_single_resource_command/workflow.xml",
-  "thumbnail": "thumbnail.png",
-  "readme": "README.md"
-}
