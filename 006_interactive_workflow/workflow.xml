@@ -3,6 +3,4 @@
   <cancel interpreter='bash'>kill.sh</cancel>
   <inputs>
   </inputs>
-  <outputs>
-  </outputs>
 </tool>

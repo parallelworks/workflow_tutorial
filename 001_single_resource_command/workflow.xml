@@ -15,6 +15,4 @@
         help='Select a resource to run the command'
     ></param>
   </inputs>
-  <outputs>
-  </outputs>
 </tool>
