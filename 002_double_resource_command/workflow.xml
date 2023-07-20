@@ -1,4 +1,4 @@
-<tool id='User.Demo_say_hello' name='User.Demo_say_hello'>
+<tool id='NA' name='NA'>
   <command interpreter='bash'>002_double_resource_command/main.sh</command>
   <inputs>
     <param 
