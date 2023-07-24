@@ -43,7 +43,7 @@
         help='Use boolean parameters to select one of two choices or answer yes/no and true/false type of questions'>
     </param>
     <param 
-        name='select single parameter' 
+        name='select_single_parameter' 
         type='select' 
         label='Select single parameter' 
         help='Use to select one value from a list of options' 
