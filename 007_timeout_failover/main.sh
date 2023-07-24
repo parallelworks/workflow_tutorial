@@ -43,7 +43,7 @@ for rl in ${resource_labels}; do
 
     if ! [ -z ${jobid} ]; then
         # Create kill script
-        echo "${sshcmd} ${delete_cmd} ${jobid}" > kill.sh
+        echo "${sshcmd} ${cancel_cmd} ${jobid}" > kill.sh
         # Wait for job with timeout
         # - Exits main.sh if job is completed or fails
         # - Continues loop if job times out
