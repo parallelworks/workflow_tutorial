@@ -1,0 +1,11 @@
+<tool id='NA' name='NA'>
+  <command interpreter='bash'>main.sh</command>
+  <inputs>
+    <param 
+        name='resource_1' 
+        type='computeResource' 
+        label='Resource' 
+        help='Select a resource to run the command'
+    ></param>
+  </inputs>
+</tool>
