@@ -61,7 +61,7 @@ This workflow accommodates running the job on both PBS queues and SLURM partitio
 ## 8. Job Submitter
 The workflow is designed to seamlessly submit a specified script to a user-selected PBS or SLURM cluster resource. Usesrs have the option to enable job tracking, allowing the PW job to wait for the cluster job to complete while continuously monitoring its status. If needed, the cluster job can be canceled directly from the PW job interface.
 
-## 9. Job Submitter
+## 9. Rsync
 This workflow showcases transferring files between the user container and the controller and compute nodes of a cluster using rsync. Depending on the files origin and destion and which machine runs the rsync command following scenarios are covered:
 
 1. rsync runs in the **user container** (usercontainer-runs-rsync.sh)
