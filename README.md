@@ -58,3 +58,5 @@ The workflow performs the following tasks:
 
 This workflow accommodates running the job on both PBS queues and SLURM partitions, providing flexibility for different resource configurations.
 
+## 8. Job Submitter
+The workflow is designed to seamlessly submit a specified script to a user-selected PBS or SLURM cluster resource. Usesrs have the option to enable job tracking, allowing the PW job to wait for the cluster job to complete while continuously monitoring its status. If needed, the cluster job can be canceled directly from the PW job interface.
