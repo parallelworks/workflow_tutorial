@@ -1,6 +1,9 @@
 # Simple Bash Demo
 In [this](https://github.com/parallelworks/simple_bash_demo/tree/main) repository, you will find a comprehensive series of progressively complex tutorials on workflow building. These tutorials are specifically designed to guide you through the diverse features and options available for creating workflows on the Parallel Works platform.
 
+[Link to First README](001_single_resource_command/README.md)
+
+
 ## 1. Single Resource Command
 This workflow allows you to run a specific command on the controller or login node of a selected resource using SSH. The command can include srun, sbatch, or qsub commands for executing jobs on SLURM partitions or PBS queues.
 

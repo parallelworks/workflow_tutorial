@@ -1,0 +1,6 @@
+## 1. Single Resource Command
+This workflow allows you to run a specific command on the controller or login node of a selected resource using SSH. The command can include srun, sbatch, or qsub commands for executing jobs on SLURM partitions or PBS queues.
+
+The workflow definition form consists of two parameters. The "command" parameter is a text field where you define the command to be executed, and the "resource" parameter allows you to choose any currently running resource in your account.
+
+When a job is submitted, the workflow files are copied to the job directory `/pw/jobs/<workflow-name>/<job-number>/`, and the command specified in the workflow XML is launched from there. The names of the workflow parameters are defined in the XML and the values are selected in the input form and written to the `inputs.sh` and `inputs.json` files within the job directory. Please note that these files contain the same data in different formats. The workflow loads the parameter values by sourcing the `inputs.sh` file.
