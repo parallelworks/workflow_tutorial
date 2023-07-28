@@ -6,7 +6,7 @@
         type='computeResource' 
         label='Resource' 
         hideUserWorkspace='true'
-        help='Select a resource to run the command'
+        help='Choose the resource for script submission'
     ></param>
     <conditional name="input_method_cond">
         <param 
