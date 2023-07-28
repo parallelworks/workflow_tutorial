@@ -1,4 +1,4 @@
-## 1. Single Resource Command
+## Single Resource Command
 This workflow allows you to run a specific command on the controller or login node of a selected resource using SSH. The command can include srun, sbatch, or qsub commands for executing jobs on SLURM partitions or PBS queues.
 
 The workflow definition form consists of two parameters. The "command" parameter is a text field where you define the command to be executed, and the "resource" parameter allows you to choose any currently running resource in your account.

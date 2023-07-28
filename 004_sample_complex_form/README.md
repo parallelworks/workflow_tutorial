@@ -1,0 +1,2 @@
+## Sample Complex XML
+This workflow offers a comprehensive XML file that serves as an illustrative example showcasing the various parameter types that can be utilized to define an input form. Upon execution, the workflow prints the `inputs.sh` and `inputs.json`, which contain the parameter names, defined in the XML file, and their corresponding parameter values, selected in the input form.
