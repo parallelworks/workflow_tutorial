@@ -1,5 +1,5 @@
 <tool id='NA' name='NA'>
-  <command interpreter='bash'>main.sh</command>
+  <command interpreter='bash'>008_script_submitter/main.sh</command>
   <cancel interpreter='bash'>cancel.sh</cancel>
   <inputs>
    <param name='resource' 
