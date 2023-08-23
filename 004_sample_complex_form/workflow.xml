@@ -68,7 +68,8 @@
     <section name='mylabel' type='section' title='Resource Parameters' expanded='false'>
     <param name='resource' 
         type='computeResource' 
-        label='Resource' 
+        label='Resource'
+        hideDisconnectedResources='true'
         help='Select a resource to run the command'
     ></param>
     <conditional name="type_the_conditional_name">
