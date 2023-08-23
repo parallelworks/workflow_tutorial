@@ -11,7 +11,8 @@
     <param 
         name='resource_1' 
         type='computeResource' 
-        label='Resource' 
+        label='Resource'
+        hideDisconnectedResources='true' 
         help='Select a resource to run the command'
     ></param>
   </inputs>
