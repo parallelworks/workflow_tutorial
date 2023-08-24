@@ -59,7 +59,7 @@
     </conditional>
     <param 
         name='scheduler_directives' 
-        label='Type your script' 
+        label='Type the scheduler directives' 
         type='textarea' 
         value='#!/bin/bash' 
         help='Type or copy paste the scheduler directives for the MPI job'
