@@ -8,22 +8,27 @@
 # 5. Submits the job directly to the scheduler, to the SLURM partition or to the PBS queue
 # 6. Optionally waits for job completion.
 
-# Load  workflow parameter names and values from the XML as environment variables
-source inputs.sh
-sed -i "s|__PW_USER__|${PW_USER}|g" inputs.sh
-sed -i "s|__PW_USER__|${PW_USER}|g" inputs.json
+APP_DIR=$(dirname $0)
+source ${APP_DIR}/libs.sh
 
-sshcmd="ssh -o StrictHostKeyChecking=no ${resource_1_username}@${resource_1_publicIp}"
+# Load  workflow parameter names and values from the XML as environment variables
+sed -i "s|__PW_USER__|${PW_USER}|g" inputs.sh
+source inputs.sh
+
+sshcmd="ssh -o StrictHostKeyChecking=no ${resource_username}@${resource_publicIp}"
+echo "SSH command"
+echo ${sshcmd}
+
 # JOB_DIR=<workflow-name>/<job-number>
 JOB_DIR=$(pwd | rev | cut -d'/' -f1-2 | rev)
 # Absolute path to the job directory in the user space
 export UCONTAINER_JOB_DIR=${PWD}
 # Absolute path to the job directory in the remote resource
-export CLUSTER_JOB_DIR=${resource_1_workdir}/pw/${JOB_DIR}/
+export CLUSTER_JOB_DIR=${resource_workdir}/pw/${JOB_DIR}/
 
 echo; echo; echo CREATING COMPILE SCRIPT
 # Create compile script
-cat >> compile.sh <<HERE
+cat > compile.sh <<HERE
 #!/bin/bash
 ${load_mpi}
 cd ${CLUSTER_JOB_DIR}
@@ -38,13 +43,14 @@ cat >> run.sh <<HERE
 ${load_mpi}
 cd ${CLUSTER_JOB_DIR}
 mpirun -np ${np} ./mpitest &> mpitest.out
+cat mpitest.out
 HERE
 cat run.sh
 
 echo; echo; echo TRANSFERRING NECESSARY FILES TO CLUSTER
 # Create remote directory
 ${sshcmd} mkdir -p ${CLUSTER_JOB_DIR}
-scp mpitest.c run.sh ${resource_1_username}@${resource_1_publicIp}:${CLUSTER_JOB_DIR}
+scp ${APP_DIR}/mpitest.c run.sh ${resource_username}@${resource_publicIp}:${CLUSTER_JOB_DIR}
 
 echo; echo; echo COMPILING APP
 ${sshcmd} 'bash -s' < compile.sh
@@ -84,3 +90,7 @@ if [[ ${wait_for_job} == "true" ]]; then
     # Make sure job is canceled before exiting the workflow
     ./cancel.sh
 fi
+
+echo; echo; echo PRINTING OUTPUT
+${sshcmd} cat ${CLUSTER_JOB_DIR}/mpitest.out
+
