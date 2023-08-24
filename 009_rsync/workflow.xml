@@ -6,6 +6,7 @@
         type='computeResource' 
         label='Resource' 
         help='Select a resource to run the command'
+        hideDisconnectedResources='true'
     ></param>
   </inputs>
 </tool>
