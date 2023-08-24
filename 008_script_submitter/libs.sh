@@ -15,17 +15,17 @@ wait_job() {
                     echo "ERROR: SLURM job [${slurm_job}] failed"
                     exit 1
                 else
-                    exit 0
+                    break
                 fi
             fi
         elif [[ ${jobschedulertype} == "PBS" ]]; then
             if [[ ${job_status} == "C" ]]; then
                 echo "Job ${jobid} exited with status C"
-                exit 0
+                break
             fi
             if [ -z ${job_status} ]; then
                 echo "Job ${jobid} exited"
-                exit 0
+                break
             fi
         fi
         echo "    Job ${jobid} status: ${job_status}"
