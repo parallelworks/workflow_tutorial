@@ -3,7 +3,8 @@
 # In this case: command, resource_1_username, resource_1_publicIp
 source inputs.sh
 # Load auxiliarie funcions and variables
-source libs.sh
+APP_DIR=$(dirname $0)
+source ${APP_DIR}/libs.sh
 
 export sshcmd="ssh -o StrictHostKeyChecking=no ${resource_username}@${resource_publicIp}"
 
