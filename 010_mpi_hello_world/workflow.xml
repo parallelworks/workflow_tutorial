@@ -8,6 +8,14 @@
         value='source /contrib/__PW_USER__/ompi/env.sh' 
         help='To load the environment, enter the appropriate command, for example: module load module-name or source path/to/env.sh.' 
     ></param>
+    <param 
+        name='np' 
+        label='Number of processes' 
+        type='integer' 
+        min="1" 
+        max="100" 
+        help='Number of MPI processes' value='4' 
+    ></param>
    <param name='resource' 
         type='computeResource' 
         label='Resource' 
@@ -36,13 +44,6 @@
                 label='Wait for the SLURM job or fire and forget? ' 
                 help='If yes is selected, the PW job waits for the SLURM job to complete while continuously monitoring its status and the possibility to cancel the SLURM job when the PW job is canceled.'>
             </param>
-            <param 
-                name='script_text' 
-                label='Type your script' 
-                type='textarea' 
-                value='#!/bin/bash\nhello' 
-                help='Type or copy paste the script that is submitted to the selected resource'
-            ></param>
         </when>
         <when value="PBS">
             <param 
@@ -56,5 +57,12 @@
             </param>
         </when>
     </conditional>
+    <param 
+        name='scheduler_directives' 
+        label='Type your script' 
+        type='textarea' 
+        value='#!/bin/bash' 
+        help='Type or copy paste the scheduler directives for the MPI job'
+    ></param>
     </inputs>
 </tool>
