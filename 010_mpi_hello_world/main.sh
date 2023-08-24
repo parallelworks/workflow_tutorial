@@ -92,5 +92,6 @@ if [[ ${wait_for_job} == "true" ]]; then
 fi
 
 echo; echo; echo PRINTING OUTPUT
-${sshcmd} cat ${CLUSTER_JOB_DIR}/mpitest.out
+echo "${sshcmd} cat ${CLUSTER_JOB_DIR}/mpitest.out"
+${sshcmd} "cat ${CLUSTER_JOB_DIR}/mpitest.out"
 
