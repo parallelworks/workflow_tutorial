@@ -10,6 +10,8 @@
 
 # Load  workflow parameter names and values from the XML as environment variables
 source inputs.sh
+sed -i "s|__PW_USER__|${PW_USER}|g" inputs.sh
+sed -i "s|__PW_USER__|${PW_USER}|g" inputs.json
 
 sshcmd="ssh -o StrictHostKeyChecking=no ${resource_1_username}@${resource_1_publicIp}"
 # JOB_DIR=<workflow-name>/<job-number>
