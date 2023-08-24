@@ -11,21 +11,21 @@ wait_job() {
             if [ -z ${job_status} ]; then
                 job_status=$($sshcmd sacct -j ${jobid}  --format=state | tail -n1)
                 echo "    Job ${jobid} exited with status ${job_status}"
-                if [[ "${job_status}" == "FAILED" ]]; then
+                if [[ "${job_status}" == *"FAILED"* ]]; then
                     echo "ERROR: SLURM job [${slurm_job}] failed"
                     exit 1
                 else
-                    exit 0
+                    break
                 fi
             fi
         elif [[ ${jobschedulertype} == "PBS" ]]; then
             if [[ ${job_status} == "C" ]]; then
                 echo "Job ${jobid} exited with status C"
-                exit 0
+                break
             fi
             if [ -z ${job_status} ]; then
                 echo "Job ${jobid} exited"
-                exit 0
+                break
             fi
         fi
         echo "    Job ${jobid} status: ${job_status}"
