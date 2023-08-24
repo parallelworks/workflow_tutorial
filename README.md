@@ -19,4 +19,4 @@ In [this](https://github.com/parallelworks/simple_bash_demo/tree/main) repositor
 
 [## 9. Rsync](009_rsync/README.md)
 
-[## 10. Rsync](010_mpi_hello_world/README.md)
+[## 10. MPI Hello World](010_mpi_hello_world/README.md)
