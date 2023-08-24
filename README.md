@@ -18,3 +18,5 @@ In [this](https://github.com/parallelworks/simple_bash_demo/tree/main) repositor
 [## 8. Script Submitter](008_script_submitter/README.md)
 
 [## 9. Rsync](009_rsync/README.md)
+
+[## 10. Rsync](010_mpi_hello_world/README.md)
