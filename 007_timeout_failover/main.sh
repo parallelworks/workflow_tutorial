@@ -9,7 +9,9 @@ python3 /swift-pw-bin/utils/input_form_resource_wrapper.py
 source inputs.sh
 source libs.sh
 
-resource_labels=$(cat workflow.xml | grep section | grep -E 'pwrl_' |  awk -F "'" '{print $2}' | sed "s|pwrl_||g" )
+app_dir=$(dirname $0)
+
+resource_labels=$(cat ${app_dir}/workflow.xml | grep section | grep -E 'pwrl_' |  awk -F "'" '{print $2}' | sed "s|pwrl_||g" )
 echo "RESOURCE LABELS:"
 echo ${resource_labels}
 for rl in ${resource_labels}; do
