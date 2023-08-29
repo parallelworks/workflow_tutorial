@@ -1,7 +1,10 @@
 {
-    "repo": "https://github.com/parallelworks/simple_bash_demo.git",
-    "branch": "main",
-    "xml": "007_timeout_failover/workflow.xml",
-    "thumbnail": "thumbnail.png",
-    "readme": "README.md"
-  }
+  "repo": "https://github.com/parallelworks/workflow_tutorial.git",
+  "branch": "main",
+  "xml": "007_timeout_failover/workflow.xml",
+  "thumbnail": "thumbnail.png",
+  "readme": "007_timeout_failover/README.md",
+  "sparsecheckout": [
+    "007_timeout_failover/"
+  ]
+}
