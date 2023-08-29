@@ -6,10 +6,10 @@ conda activate
 
 python3 /swift-pw-bin/utils/input_form_resource_wrapper.py 
 
-source inputs.sh
-source libs.sh
-
 app_dir=$(dirname $0)
+
+source inputs.sh
+source ${app_dir}/libs.sh
 
 resource_labels=$(cat ${app_dir}/workflow.xml | grep section | grep -E 'pwrl_' |  awk -F "'" '{print $2}' | sed "s|pwrl_||g" )
 echo "RESOURCE LABELS:"
