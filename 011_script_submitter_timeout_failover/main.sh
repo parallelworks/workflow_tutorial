@@ -17,7 +17,7 @@ source ${APP_DIR}/libs.sh
 # JOBID=<workflow-name>-<job-number>
 export PW_JOB_ID=$(pwd | rev | cut -d'/' -f1-2 | rev | tr '/' '-')
 
-resource_labels=$(cat ${app_dir}/workflow.xml | grep section | grep -E 'pwrl_' |  awk -F "'" '{print $2}' | sed "s|pwrl_||g" )
+resource_labels=$(cat ${APP_DIR}/workflow.xml | grep section | grep -E 'pwrl_' |  awk -F "'" '{print $2}' | sed "s|pwrl_||g" )
 
 echo "RESOURCE LABELS:"
 echo ${resource_labels}
