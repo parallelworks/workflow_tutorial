@@ -45,7 +45,7 @@
                     help='Type or copy paste the script that is submitted to the selected resource'
                 ></param>
     </section>
-     <section name='pwrl_burst' type='section' title='Main Host' expanded='true'>
+     <section name='pwrl_burst' type='section' title='Burst Host' expanded='true'>
         <conditional name="input_method_cond">
             <param 
                 name='jobschedulertype' 
