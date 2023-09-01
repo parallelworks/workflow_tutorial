@@ -62,18 +62,16 @@ for rl in ${resource_labels}; do
     fi
     echo "Submitted job ID: ${jobid}"
 
-    if [[ ${wait_for_job} == "true" ]]; then
-        # Write cancel script to remove/cancel the submitted job from the queue if the pw job is canceled
-        echo "#!/bin/bash" > cancel.sh
-        echo "${sshcmd} ${cancel_cmd} ${jobid}" >> cancel.sh
-        chmod +x cancel.sh
-        # Wait for job with timeout
-        # - Exits main.sh if job is completed or fails
-        # - Continues loop if job times out
-        wait_job_timeout
-        # Make sure job is canceled before exiting the workflow
-        ./cancel.sh
-    fi
+    # Write cancel script to remove/cancel the submitted job from the queue if the pw job is canceled
+    echo "#!/bin/bash" > cancel.sh
+    echo "${sshcmd} ${cancel_cmd} ${jobid}" >> cancel.sh
+    chmod +x cancel.sh
+    # Wait for job with timeout
+    # - Exits main.sh if job is completed or fails
+    # - Continues loop if job times out
+    wait_job_timeout
+    # Make sure job is canceled before exiting the workflow
+    ./cancel.sh
 done 
 
 echo "The command timed out in all the resources"
