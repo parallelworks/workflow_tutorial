@@ -30,6 +30,7 @@ for rl in ${resource_labels}; do
     export sshcmd="ssh -o StrictHostKeyChecking=no ${resource_publicIp}"
 
     if [[ ${input_method} == "TEXT" ]]; then
+        script_text=$(cat resources/${rl}/inputs.json | grep script_text | awk -F': ' '{print $2}' | sed 's/[",]//g')
         # WRITE SCRIPT
         # Path to the script in the user workspace
         workspace_script_path="${PWD}/resources/${rl}/script-${rl}.sh"
@@ -41,7 +42,8 @@ for rl in ${resource_labels}; do
     if [[ ${input_method} == "TEXT" ]] || [[ ${input_method} == "WORKSPACE_PATH" ]]; then
         # TRANSFER SCRIPT TO RESOURCE
         # Path to the script in the resource
-        resource_script_path=${resource_workdir}/resources/${rl}/script-${rl}-${PW_JOB_ID}.sh
+        ${sshcmd} "mkdir -p ${resource_workdir}"
+        resource_script_path=${resource_workdir}/script-${rl}-${PW_JOB_ID}.sh
         echo "Transferring script ${workspace_script_path} to ${resource_publicIp}:${resource_script_path}"
         scp ${workspace_script_path} ${resource_publicIp}:${resource_script_path}
     fi
