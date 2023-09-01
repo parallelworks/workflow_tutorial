@@ -4,6 +4,13 @@
   <inputs>
       <section name='pwrl_main' type='section' title='Main Host' expanded='true'>
         <param 
+            name='resource' 
+            type='computeResource' 
+            label='Resource' 
+            hideUserWorkspace='true' 
+            help='Resource to run the script'>
+        </param>
+        <param 
             name='max_time' 
             label='Maximum Time' 
             type='text' 
@@ -61,6 +68,13 @@
         </conditional>
     </section>
      <section name='pwrl_burst' type='section' title='Burst Host' expanded='true'>
+        <param 
+            name='resource' 
+            type='computeResource' 
+            label='Resource' 
+            hideUserWorkspace='true' 
+            help='Resource to run the script'>
+        </param> 
         <param 
             name='max_time' 
             label='Maximum Time' 

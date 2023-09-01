@@ -10,7 +10,7 @@
         help='Type in the command to run on the remote resource' 
     ></param>
   <section name='pwrl_main' type='section' title='Main Host' expanded='true'>
-      <param name='resource' type='computeResource' label='Service host' hideUserWorkspace='true' help='Resource to host the service'></param>
+      <param name='resource' type='computeResource' label='Resource' hideUserWorkspace='true' help='Resource to run the command'></param>
       <param 
         name='max_time' 
         label='Maximum Time' 
@@ -34,7 +34,7 @@
       </conditional>
     </section>
     <section name='pwrl_burst' type='section' title='Burst Host' expanded='true'>
-      <param name='resource' type='computeResource' label='Service host' hideUserWorkspace='true' help='Resource to host the service'></param>
+      <param name='resource' type='computeResource' label='Resource' hideUserWorkspace='true' help='Resource to run the command'></param>
       <param 
         name='max_time' 
         label='Maximum Time' 
