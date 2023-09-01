@@ -1,122 +1,61 @@
 <tool id='NA' name='NA'>
-  <command interpreter='bash'>008_script_submitter/main.sh</command>
-  <cancel interpreter='bash'>cancel.sh</cancel>
+  <command interpreter='bash'>007_timeout_failover/main.sh</command>
+  <cancel interpreter='bash'>kill.sh</cancel>
   <inputs>
-      <section name='pwrl_main' type='section' title='Main Host' expanded='true'>
-        <param 
-            name='max_time' 
-            label='Maximum Time' 
-            type='text' 
-            value='300' 
-            help='The command is canceled if it is not completed within this time limit after submission to the resource' 
-        ></param>
-        <param 
-            name='jobschedulertype' 
-            type='select' 
-            label='Select Controller, SLURM Partition or PBS Queue' 
-            help='Job will submitted using SSH, sbatch or qsub, respectively'   
-            multiple='false'>
-            <option value="CONTROLLER" selected="true">Controller or Login Node</option>
-            <option value="SLURM">SLURM Partition</option>
+    <param 
+        name='command' 
+        label='Command to Run' 
+        type='text' 
+        value='hostname' 
+        help='Type in the command to run on the remote resource' 
+    ></param>
+  <section name='pwrl_main' type='section' title='Main Host' expanded='true'>
+      <param name='resource' type='computeResource' label='Service host' hideUserWorkspace='true' help='Resource to host the service'></param>
+      <param 
+        name='max_time' 
+        label='Maximum Time' 
+        type='text' 
+        value='300' 
+        help='The command is canceled if it is not completed within this time limit after submission to the resource' 
+      ></param>
+      <conditional name="jobschedulertype_cond">
+          <param name='jobschedulertype' type='select' label='Select Controller, SLURM Partition or PBS Queue' help='Job will submitted using SSH, sbatch or qsub, respectively' width='50%_none' multiple='false'>
+            <option value="SLURM" selected="true">SLURM Partition</option>
             <option value="PBS">PBS Queue</option>
         </param>
-        <conditional name="input_method_cond">
-            <param 
-                name='input_method' 
-                type='select' 
-                label='Select Method to Input Script' 
-                help='This script is submitted to the selected resource'   
-                multiple='false'>
-                    <option value="TEXT" selected="true">Type your script</option>
-                    <option value="WORKSPACE_PATH">Path to the script in the user workspace</option>
-                    <option value="RESOURCE_PATH">Path to the script in the resource</option>
+        <when value="SLURM">
+            <param name='scheduler_directives_slurm' label='Scheduler directives' type='text' help='e.g. --partition=compute;--tasks-per-node=1 - Use the semicolon character ; to separate parameters. Do not include the SBATCH keyword.' value='' width='100%_none'>
             </param>
-            <when value="TEXT">
-                <param 
-                    name='script_text' 
-                    label='Type your script' 
-                    type='textarea' 
-                    value='#!/bin/bash' 
-                    help='Type or copy paste the script that is submitted to the selected resource'
-                ></param>
-            </when>
-            <when value="WORKSPACE_PATH">
-                <param 
-                    name='workspace_script_path' 
-                    label='Path to the script in the user workspace' 
-                    type='text' 
-                    help='Use an absolute path if the script is not in the workflow directory' 
-                    value='/pw/path/to/script' 
-                ></param>
-            </when>
-            <when value="RESOURCE_PATH">
-                <param 
-                    name='resource_script_path' 
-                    label='Path to the script in the resource' 
-                    type='text' 
-                    help='Use an absolute path if the script is not in the workflow directory' 
-                    value='/path/to/script' 
-                ></param>
-            </when>
-        </conditional>
+        </when>
+        <when value="PBS">
+            <param name='scheduler_directives_pbs' label='Scheduler directives' type='text' help='e.g. -l mem=1000;-l nodes=1:ppn=4 - Use the semicolon character ; to separate parameters. Do not include the PBS keyword.' value='-q debug; -l walltime=00:10:00' width='100%_none'>
+            </param>
+        </when>
+      </conditional>
     </section>
-     <section name='pwrl_burst' type='section' title='Burst Host' expanded='true'>
-        <param 
-            name='max_time' 
-            label='Maximum Time' 
-            type='text' 
-            value='300' 
-            help='The command is canceled if it is not completed within this time limit after submission to the resource' 
-        ></param>
-        <param 
-            name='jobschedulertype' 
-            type='select' 
-            label='Select Controller, SLURM Partition or PBS Queue' 
-            help='Job will submitted using SSH, sbatch or qsub, respectively'   
-            multiple='false'>
-            <option value="CONTROLLER" selected="true">Controller or Login Node</option>
-            <option value="SLURM">SLURM Partition</option>
+    <section name='pwrl_burst' type='section' title='Burst Host' expanded='true'>
+      <param name='resource' type='computeResource' label='Service host' hideUserWorkspace='true' help='Resource to host the service'></param>
+      <param 
+        name='max_time' 
+        label='Maximum Time' 
+        type='text' 
+        value='300' 
+        help='The command is canceled if it is not completed within this time limit after submission to the resource' 
+      ></param>
+      <conditional name="jobschedulertype_cond">
+          <param name='jobschedulertype' type='select' label='Select Controller, SLURM Partition or PBS Queue' help='Job will submitted using SSH, sbatch or qsub, respectively' width='50%_none' multiple='false'>
+            <option value="SLURM" selected="true">SLURM Partition</option>
             <option value="PBS">PBS Queue</option>
         </param>
-        <conditional name="input_method_cond">
-            <param 
-                name='input_method' 
-                type='select' 
-                label='Select Method to Input Script' 
-                help='This script is submitted to the selected resource'   
-                multiple='false'>
-                    <option value="TEXT" selected="true">Type your script</option>
-                    <option value="WORKSPACE_PATH">Path to the script in the user workspace</option>
-                    <option value="RESOURCE_PATH">Path to the script in the resource</option>
+        <when value="SLURM">
+            <param name='scheduler_directives_slurm' label='Scheduler directives' type='text' help='e.g. --partition=compute;--tasks-per-node=1 - Use the semicolon character ; to separate parameters. Do not include the SBATCH keyword.' value='' width='100%_none'>
             </param>
-            <when value="TEXT">
-                <param 
-                    name='script_text' 
-                    label='Type your script' 
-                    type='textarea' 
-                    value='#!/bin/bash' 
-                    help='Type or copy paste the script that is submitted to the selected resource'
-                ></param>
-            </when>
-            <when value="WORKSPACE_PATH">
-                <param 
-                    name='workspace_script_path' 
-                    label='Path to the script in the user workspace' 
-                    type='text' 
-                    help='Use an absolute path if the script is not in the workflow directory' 
-                    value='/pw/path/to/script' 
-                ></param>
-            </when>
-            <when value="RESOURCE_PATH">
-                <param 
-                    name='resource_script_path' 
-                    label='Path to the script in the resource' 
-                    type='text' 
-                    help='Use an absolute path if the script is not in the workflow directory' 
-                    value='/path/to/script' 
-                ></param>
-            </when>
-        </conditional>
-    </section>
+        </when>
+        <when value="PBS">
+            <param name='scheduler_directives_pbs' label='Scheduler directives' type='text' help='e.g. -l mem=1000;-l nodes=1:ppn=4 - Use the semicolon character ; to separate parameters. Do not include the PBS keyword.' value='-q debug; -l walltime=00:10:00' width='100%_none'>
+            </param>
+        </when>
+      </conditional>
+      </section>
   </inputs>
 </tool>
