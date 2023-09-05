@@ -8,7 +8,7 @@ wait_job() {
         job_status=$($sshcmd ${status_cmd} | grep ${jobid} | awk '{print $5}')
         if [[ ${jobschedulertype} == "SLURM" ]]; then
             # If job status is empty job is no longer running
-            if [ -z ${job_status} ]; then
+            if [ -z "${job_status}" ]; then
                 job_status=$($sshcmd sacct -j ${jobid}  --format=state | tail -n1)
                 echo "    Job ${jobid} exited with status ${job_status}"
                 if [[ "${job_status}" == *"FAILED"* ]]; then
@@ -19,11 +19,11 @@ wait_job() {
                 fi
             fi
         elif [[ ${jobschedulertype} == "PBS" ]]; then
-            if [[ ${job_status} == "C" ]]; then
+            if [[ "${job_status}" == "C" ]]; then
                 echo "Job ${jobid} exited with status C"
                 break
             fi
-            if [ -z ${job_status} ]; then
+            if [ -z "${job_status}" ]; then
                 echo "Job ${jobid} exited"
                 break
             fi
