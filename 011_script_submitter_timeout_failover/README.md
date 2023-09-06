@@ -1,5 +1,5 @@
 ## Script Submitter with Timeout and Failover
-This workflow is a combination of the 007_timeout_failover and 008_script_submitter workflow. It submits a script to the "main" resource. If the job fails or times out it submits a second script to the "burst" resource. Here are some sample scripts to submit to the controller, SLURM and PBS, respectively:
+This workflow is a combination of the [007_timeout_failover](../007_timeout_failover/README.md) and 008_script_submitter workflow. It submits a script to the "main" resource. If the job fails or times out it submits a second script to the "burst" resource. Here are some sample scripts to submit to the controller, SLURM and PBS, respectively:
 
 ```
 #!/bin/bash
