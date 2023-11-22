@@ -15,3 +15,18 @@ Command
 ```
 
 Subsequently, it submits this script to the controller node, SLURM partition, or PBS queue of the designated resource. Optionally, it can wait for job completion and cancel it if needed.
+
+Here are some sample directives to submit SLURM and PBS, respectively:
+
+```
+#SBATCH --ntasks-per-node=1
+#SBATCH --nodes=1
+#SBATCH --job-name=transfer-data
+```
+
+```
+#PBS -N transfer-data
+#PBS -l nodes=1:ppn=1
+#PBS -l walltime=00:10:00
+#PBS -q B30
+```
