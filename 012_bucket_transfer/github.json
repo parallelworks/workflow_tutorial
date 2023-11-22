@@ -1,0 +1,10 @@
+{
+  "repo": "https://github.com/parallelworks/workflow_tutorial.git",
+  "branch": "bucket_transfer",
+  "xml": "012_bucket_transfer/workflow.xml",
+  "thumbnail": "thumbnail.png",
+  "readme": "012_bucket_transfer/README.md",
+  "sparsecheckout": [
+    "012_bucket_transfer"
+  ]
+}
