@@ -22,3 +22,5 @@ In [this](https://github.com/parallelworks/simple_bash_demo/tree/main) repositor
 [## 10. MPI Hello World](010_mpi_hello_world/README.md)
 
 [## 11. Script Submitter with Timeout Failover](011_script_submitter_timeout_failover/README.md)
+
+[## 12. Bucket Transfer](012_bucket_transfer/README.md)
