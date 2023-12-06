@@ -9,7 +9,7 @@
         hideDisconnectedResources='true'
         help='Choose the resource for script submission'
     ></param>
-    <conditional name="input_method_cond">
+    <conditional name="jobschedulertype_cond">
         <param 
             name='jobschedulertype' 
             type='select' 
