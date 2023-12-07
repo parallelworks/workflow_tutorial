@@ -29,16 +29,16 @@
         help='e.g. --partition=compute;--tasks-per-node=1 - Use the semicolon character ; to separate parameters. Do not include the SBATCH keyword.' 
         value=''
         show_if="SLURM"
-        depends_on='jobschedulertype'
+        depends_on='pwrl_main.jobschedulertype'
       ></param>
       <param 
         name='scheduler_directives_pbs' 
         label='Scheduler directives' 
         type='text' 
         help='e.g. -l mem=1000;-l nodes=1:ppn=4 - Use the semicolon character ; to separate parameters. Do not include the PBS keyword.' 
-        value='-q debug; -l walltime=00:10:00' 
+        value='' 
         show_if="PBS"
-        depends_on='jobschedulertype'
+        depends_on='pwrl_main.jobschedulertype'
       ></param>
     </section>
     <section name='pwrl_burst' type='section' title='Burst Host' expanded='true'>
@@ -61,17 +61,17 @@
         help='e.g. --partition=compute;--tasks-per-node=1 - Use the semicolon character ; to separate parameters. Do not include the SBATCH keyword.' 
         value=''
         show_if="SLURM"
-        depends_on='jobschedulertype'
+        depends_on='pwrl_burst.jobschedulertype'
       ></param>
       <param 
         name='scheduler_directives_pbs' 
         label='Scheduler directives' 
         type='text' 
         help='e.g. -l mem=1000;-l nodes=1:ppn=4 - Use the semicolon character ; to separate parameters. Do not include the PBS keyword.' 
-        value='-q debug; -l walltime=00:10:00' 
+        value='' 
         show_if="PBS"
-        depends_on='jobschedulertype'
-      ></param>      
+        depends_on='pwrl_burst.jobschedulertype'
+      ></param>   
       </section>
   </inputs>
 </tool>
