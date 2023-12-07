@@ -18,20 +18,28 @@
         value='300' 
         help='The command is canceled if it is not completed within this time limit after submission to the resource' 
       ></param>
-      <conditional name="jobschedulertype_cond">
-          <param name='jobschedulertype' type='select' label='Select Controller, SLURM Partition or PBS Queue' help='Job will submitted using SSH, sbatch or qsub, respectively' width='50%_none' multiple='false'>
-            <option value="SLURM" selected="true">SLURM Partition</option>
-            <option value="PBS">PBS Queue</option>
-        </param>
-        <when value="SLURM">
-            <param name='scheduler_directives_slurm' label='Scheduler directives' type='text' help='e.g. --partition=compute;--tasks-per-node=1 - Use the semicolon character ; to separate parameters. Do not include the SBATCH keyword.' value='' width='100%_none'>
-            </param>
-        </when>
-        <when value="PBS">
-            <param name='scheduler_directives_pbs' label='Scheduler directives' type='text' help='e.g. -l mem=1000;-l nodes=1:ppn=4 - Use the semicolon character ; to separate parameters. Do not include the PBS keyword.' value='-q debug; -l walltime=00:10:00' width='100%_none'>
-            </param>
-        </when>
-      </conditional>
+      <param name='jobschedulertype' type='select' label='Select Controller, SLURM Partition or PBS Queue' help='Job will submitted using SSH, sbatch or qsub, respectively' width='50%_none' multiple='false'>
+          <option value="SLURM" selected="true">SLURM Partition</option>
+          <option value="PBS">PBS Queue</option>
+      </param>
+      <param 
+        name='scheduler_directives_slurm' 
+        label='Scheduler directives' 
+        type='text' 
+        help='e.g. --partition=compute;--tasks-per-node=1 - Use the semicolon character ; to separate parameters. Do not include the SBATCH keyword.' 
+        value=''
+        show_if="SLURM"
+        depends_on='jobschedulertype'
+      ></param>
+      <param 
+        name='scheduler_directives_pbs' 
+        label='Scheduler directives' 
+        type='text' 
+        help='e.g. -l mem=1000;-l nodes=1:ppn=4 - Use the semicolon character ; to separate parameters. Do not include the PBS keyword.' 
+        value='-q debug; -l walltime=00:10:00' 
+        show_if="PBS"
+        depends_on='jobschedulertype'
+      ></param>
     </section>
     <section name='pwrl_burst' type='section' title='Burst Host' expanded='true'>
       <param name='resource' type='computeResource' label='Resource' hideUserWorkspace='true' help='Resource to run the command'></param>
@@ -42,20 +50,28 @@
         value='300' 
         help='The command is canceled if it is not completed within this time limit after submission to the resource' 
       ></param>
-      <conditional name="jobschedulertype_cond">
-          <param name='jobschedulertype' type='select' label='Select Controller, SLURM Partition or PBS Queue' help='Job will submitted using SSH, sbatch or qsub, respectively' width='50%_none' multiple='false'>
-            <option value="SLURM" selected="true">SLURM Partition</option>
-            <option value="PBS">PBS Queue</option>
-        </param>
-        <when value="SLURM">
-            <param name='scheduler_directives_slurm' label='Scheduler directives' type='text' help='e.g. --partition=compute;--tasks-per-node=1 - Use the semicolon character ; to separate parameters. Do not include the SBATCH keyword.' value='' width='100%_none'>
-            </param>
-        </when>
-        <when value="PBS">
-            <param name='scheduler_directives_pbs' label='Scheduler directives' type='text' help='e.g. -l mem=1000;-l nodes=1:ppn=4 - Use the semicolon character ; to separate parameters. Do not include the PBS keyword.' value='-q debug; -l walltime=00:10:00' width='100%_none'>
-            </param>
-        </when>
-      </conditional>
+      <param name='jobschedulertype' type='select' label='Select Controller, SLURM Partition or PBS Queue' help='Job will submitted using SSH, sbatch or qsub, respectively' width='50%_none' multiple='false'>
+          <option value="SLURM" selected="true">SLURM Partition</option>
+          <option value="PBS">PBS Queue</option>
+      </param>
+      <param 
+        name='scheduler_directives_slurm' 
+        label='Scheduler directives' 
+        type='text' 
+        help='e.g. --partition=compute;--tasks-per-node=1 - Use the semicolon character ; to separate parameters. Do not include the SBATCH keyword.' 
+        value=''
+        show_if="SLURM"
+        depends_on='jobschedulertype'
+      ></param>
+      <param 
+        name='scheduler_directives_pbs' 
+        label='Scheduler directives' 
+        type='text' 
+        help='e.g. -l mem=1000;-l nodes=1:ppn=4 - Use the semicolon character ; to separate parameters. Do not include the PBS keyword.' 
+        value='-q debug; -l walltime=00:10:00' 
+        show_if="PBS"
+        depends_on='jobschedulertype'
+      ></param>      
       </section>
   </inputs>
 </tool>
