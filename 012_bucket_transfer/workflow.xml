@@ -21,53 +21,35 @@
         hideDisconnectedResources='true'
         help='Choose the resource for script submission'
     ></param>
-    <conditional name="input_method_cond">
-        <param 
-            name='jobschedulertype' 
-            type='select' 
-            label='Select Controller, SLURM Partition or PBS Queue' 
-            help='Job will submitted using SSH, sbatch or qsub, respectively'   
-            multiple='false'>
+    <param 
+        name='jobschedulertype' 
+        type='select' 
+        label='Select Controller, SLURM Partition or PBS Queue' 
+        help='Job will submitted using SSH, sbatch or qsub, respectively'   
+        multiple='false'>
             <option value="CONTROLLER" selected="true">Controller or Login Node</option>
             <option value="SLURM">SLURM Partition</option>
             <option value="PBS">PBS Queue</option>
-        </param>
-        <when value="SLURM">
-            <param 
-                name='wait_for_job' 
-                type='boolean' 
-                truevalue='Yes' 
-                falsevalue='No' 
-                checked='True'
-                label='Wait for the SLURM job or fire and forget? ' 
-                help='If yes is selected, the PW job waits for the SLURM job to complete while continuously monitoring its status and the possibility to cancel the SLURM job when the PW job is canceled.'>
-            </param>
-            <param 
-                name='scheduler_directives' 
-                label='Type the scheduler directives' 
-                type='textarea' 
-                value='#!/bin/bash' 
-                help='Type or copy paste the scheduler directives.'
-            ></param>
-        </when>
-        <when value="PBS">
-            <param 
-                name='wait_for_job' 
-                type='boolean' 
-                truevalue='Yes' 
-                falsevalue='No' 
-                checked='True'
-                label='Wait for the PBS job or fire and forget? ' 
-                help='If yes is selected, the PW job waits for the PBS job to complete while continuously monitoring its status and the possibility to cancel the PBS job when the PW job is canceled.'>
-            </param>
-            <param 
-                name='scheduler_directives' 
-                label='Type the scheduler directives' 
-                type='textarea' 
-                value='#!/bin/bash' 
-                help='Type or copy paste the scheduler directives.'
-            ></param>
-        </when>
-    </conditional>
+    </param>
+    <param 
+        name='wait_for_job' 
+        type='boolean' 
+        truevalue='Yes' 
+        falsevalue='No' 
+        checked='True'
+        label='Wait for the SLURM job or fire and forget? ' 
+        help='If yes is selected, the PW job waits for the SLURM job to complete while continuously monitoring its status and the possibility to cancel the SLURM job when the PW job is canceled.'
+        show_if="['SLURM', 'PBS']"
+        depends_on='jobschedulertype'
+    ></param>
+    <param 
+        name='scheduler_directives' 
+        label='Type the scheduler directives' 
+        type='textarea' 
+        value='#!/bin/bash' 
+        help='Type or copy paste the scheduler directives.'
+        show_if="['SLURM', 'PBS']"
+        depends_on='jobschedulertype'
+    ></param>
     </inputs>
 </tool>
