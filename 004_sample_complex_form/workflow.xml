@@ -10,69 +10,68 @@
         help='Type your text'
     ></param>
     <section name='application' type='section' title='Application Parameters' expanded='true'>
-    <param 
-        name='text_paramameter' 
-        label='Text Parameter' 
-        type='text' 
-        value='This is a sample text parameter' 
-        help='Type your text'
-    ></param>
-    <param 
-        name='hidden_parameter' 
-        label='Hidden Parameter' 
-        type='hidden' 
-        value='This is a sample hidden parameter' 
-        help='Hidden parameter can be used to simplify the input form or hide condifuration parameters'
-    ></param>
-    <param 
-        name='integer_parameter' 
-        label='Integer Parameter' 
-        type='integer' 
-        min='1'
-        max='10'
-        help='Use to select integer values in a specified range' 
-        value='2'
-    ></param>
-    <param 
-        name='boolean_parameter' 
-        type='boolean' 
-        truevalue='Yes' 
-        falsevalue='No' 
-        checked='True'
-        label='Boolean Parameter' 
-        help='Use boolean parameters to select one of two choices or answer yes/no and true/false type of questions'>
-    </param>
-    <param 
-        name='select_single_parameter' 
-        type='select' 
-        label='Select single parameter' 
-        help='Use to select one value from a list of options' 
-        multiple='false'
-        >
-            <option value="option_1">Option 1</option>
-            <option value="option_2" selected="true">Option 2</option>
-            <option value="option_3" >Option 3</option>
-    </param>
-    <param 
-        name='select_multiple_parameters' 
-        type='select' 
-        label='Select Multiple Parameter' 
-        help='Use to select multiple values from a list of options' 
-        multiple='true'
-        >
-            <option value="option_1" selected="true">Option 1</option>
-            <option value="option_2" selected="true">Option 2</option>
-            <option value="option_3" >Option 3</option>
-    </param>
+        <param 
+            name='text_paramameter' 
+            label='Text Parameter' 
+            type='text' 
+            value='This is a sample text parameter' 
+            help='Type your text'
+        ></param>
+        <param 
+            name='hidden_parameter' 
+            label='Hidden Parameter' 
+            type='hidden' 
+            value='This is a sample hidden parameter' 
+            help='Hidden parameter can be used to simplify the input form or hide condifuration parameters'
+        ></param>
+        <param 
+            name='integer_parameter' 
+            label='Integer Parameter' 
+            type='integer' 
+            min='1'
+            max='10'
+            help='Use to select integer values in a specified range' 
+            value='2'
+        ></param>
+        <param 
+            name='boolean_parameter' 
+            type='boolean' 
+            truevalue='Yes' 
+            falsevalue='No' 
+            checked='True'
+            label='Boolean Parameter' 
+            help='Use boolean parameters to select one of two choices or answer yes/no and true/false type of questions'>
+        </param>
+        <param 
+            name='select_single_parameter' 
+            type='select' 
+            label='Select single parameter' 
+            help='Use to select one value from a list of options' 
+            multiple='false'
+            >
+                <option value="option_1">Option 1</option>
+                <option value="option_2" selected="true">Option 2</option>
+                <option value="option_3" >Option 3</option>
+        </param>
+        <param 
+            name='select_multiple_parameters' 
+            type='select' 
+            label='Select Multiple Parameter' 
+            help='Use to select multiple values from a list of options' 
+            multiple='true'
+            >
+                <option value="option_1" selected="true">Option 1</option>
+                <option value="option_2" selected="true">Option 2</option>
+                <option value="option_3" >Option 3</option>
+        </param>
     </section>
     <section name='mylabel' type='section' title='Resource Parameters' expanded='false'>
-    <param name='resource' 
-        type='computeResource' 
-        label='Resource'
-        hideDisconnectedResources='true'
-        help='Select a resource to run the command'
-    ></param>
-    <conditional name="type_the_conditional_name">
+        <param name='resource' 
+            type='computeResource' 
+            label='Resource'
+            hideDisconnectedResources='true'
+            help='Select a resource to run the command'
+        ></param>
         <param 
             name='jobschedulertype' 
             type='select' 
@@ -84,41 +83,42 @@
                 <option value="PBS">PBS Queue</option>
                 <option value="LOCAL">PW USER Space</option>
         </param>
-        <when value="SLURM">
-            <param 
-                name='partition' 
-                label='SLURM partition' 
-                type='text' 
-                help='Partition to submit the interactive job. Leave empty to let SLURM pick the optimal option.' 
-                value='' 
-                width='50%_none'
-            ></param>
-            <param 
-                name='slurm_scheduler_directives' 
-                label='Scheduler directives' 
-                type='text' 
-                help='e.g. --mem=1000;--gpus-per-node=1 - Use the semicolon character ; to separate parameters. Do not include the SBATCH keyword.' 
-                value='--time=00:20:00;--nodes=1;--exclusive' 
-            ></param>
-        </when>
-        <when value="PBS">
-            <param 
-                name='queue' 
-                label='PBS queue' 
-                type='text' 
-                help='Queue to submit the interactive job. Must select one! Use [qstat -f -Q] to list all queues on the system' 
-                value='' 
-            ></param>
-            <param 
-                name='pbs_scheduler_directives' 
-                label='Scheduler directives' 
-                type='text' 
-                help='e.g. -l mem=1000;-l nodes=1:ppn=4 - Use the semicolon character ; to separate parameters. Do not include the PBS keyword.' 
-                value='-l walltime=00:20:00;-l nodes=1;-l naccesspolicy=SINGLEJOB -n' 
-                width='100%_none'
-            ></param>
-        </when>
-    </conditional>
+        <param 
+            name='partition' 
+            label='SLURM partition' 
+            type='text' 
+            help='Partition to submit the interactive job. Leave empty to let SLURM pick the optimal option.' 
+            value=''
+            show_if='SLURM'
+            depends_on='mylabel.jobschedulertype'
+        ></param>
+        <param 
+            name='slurm_scheduler_directives' 
+            label='Scheduler directives' 
+            type='text' 
+            help='e.g. --mem=1000;--gpus-per-node=1 - Use the semicolon character ; to separate parameters. Do not include the SBATCH keyword.' 
+            value=''
+            show_if='SLURM'
+            depends_on='mylabel.jobschedulertype' 
+        ></param>
+        <param 
+            name='queue' 
+            label='PBS queue' 
+            type='text' 
+            help='Queue to submit the interactive job. Must select one! Use [qstat -f -Q] to list all queues on the system' 
+            value=''
+            show_if='PBS'
+            depends_on='mylabel.jobschedulertype' 
+        ></param>
+        <param 
+            name='pbs_scheduler_directives' 
+            label='Scheduler directives' 
+            type='text' 
+            help='e.g. -l mem=1000;-l nodes=1:ppn=4 - Use the semicolon character ; to separate parameters. Do not include the PBS keyword.' 
+            value='' 
+            show_if='PBS'
+            depends_on='mylabel.jobschedulertype' 
+        ></param>
     </section>
   </inputs>
 </tool>

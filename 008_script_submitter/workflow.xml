@@ -9,78 +9,63 @@
         hideDisconnectedResources='true'
         help='Choose the resource for script submission'
     ></param>
-    <conditional name="jobschedulertype_cond">
-        <param 
-            name='jobschedulertype' 
-            type='select' 
-            label='Select Controller, SLURM Partition or PBS Queue' 
-            help='Job will submitted using SSH, sbatch or qsub, respectively'   
-            multiple='false'>
-            <option value="CONTROLLER" selected="true">Controller or Login Node</option>
-            <option value="SLURM">SLURM Partition</option>
-            <option value="PBS">PBS Queue</option>
-        </param>
-        <when value="SLURM">
-            <param 
-                name='wait_for_job' 
-                type='boolean' 
-                truevalue='Yes' 
-                falsevalue='No' 
-                checked='True'
-                label='Wait for the SLURM job or fire and forget? ' 
-                help='If yes is selected, the PW job waits for the SLURM job to complete while continuously monitoring its status and the possibility to cancel the SLURM job when the PW job is canceled.'>
-            </param>
-        </when>
-        <when value="PBS">
-            <param 
-                name='wait_for_job' 
-                type='boolean' 
-                truevalue='Yes' 
-                falsevalue='No' 
-                checked='True'
-                label='Wait for the PBS job or fire and forget? ' 
-                help='If yes is selected, the PW job waits for the PBS job to complete while continuously monitoring its status and the possibility to cancel the PBS job when the PW job is canceled.'>
-            </param>
-        </when>
-    </conditional>
-    <conditional name="input_method_cond">
-        <param 
-            name='input_method' 
-            type='select' 
-            label='Select Method to Input Script' 
-            help='This script is submitted to the selected resource'   
-            multiple='false'>
-                <option value="TEXT" selected="true">Type your script</option>
-                <option value="WORKSPACE_PATH">Path to the script in the user workspace</option>
-                <option value="RESOURCE_PATH">Path to the script in the resource</option>
-        </param>
-        <when value="TEXT">
-            <param 
-                name='script_text' 
-                label='Type your script' 
-                type='textarea' 
-                value='#!/bin/bash' 
-                help='Type or copy paste the script that is submitted to the selected resource'
-            ></param>
-        </when>
-        <when value="WORKSPACE_PATH">
-            <param 
-                name='workspace_script_path' 
-                label='Path to the script in the user workspace' 
-                type='text' 
-                help='Use an absolute path if the script is not in the workflow directory' 
-                value='/pw/path/to/script' 
-            ></param>
-        </when>
-        <when value="RESOURCE_PATH">
-            <param 
-                name='resource_script_path' 
-                label='Path to the script in the resource' 
-                type='text' 
-                help='Use an absolute path if the script is not in the workflow directory' 
-                value='/path/to/script' 
-            ></param>
-        </when>
-    </conditional>
+    <param 
+        name='jobschedulertype' 
+        type='select' 
+        label='Select Controller, SLURM Partition or PBS Queue' 
+        help='Job will submitted using SSH, sbatch or qsub, respectively'   
+        multiple='false'>
+        <option value="CONTROLLER" selected="true">Controller or Login Node</option>
+        <option value="SLURM">SLURM Partition</option>
+        <option value="PBS">PBS Queue</option>
+    </param>
+    <param
+        name='wait_for_job'
+        type='boolean'
+        truevalue='Yes'
+        falsevalue='No'
+        checked='True'
+        show_if="['SLURM', 'PBS']"
+        depends_on='jobschedulertype'
+        label='Wait for the SLURM job or fire and forget? '
+        help='If yes is selected, the PW job waits for the SLURM job to complete while continuously monitoring its status and the possibility to cancel the SLURM job when the PW job is canceled.'>
+    </param>
+    <param 
+        name='input_method' 
+        type='select' 
+        label='Select Method to Input Script' 
+        help='This script is submitted to the selected resource'   
+        multiple='false'>
+            <option value="TEXT" selected="true">Type your script</option>
+            <option value="WORKSPACE_PATH">Path to the script in the user workspace</option>
+            <option value="RESOURCE_PATH">Path to the script in the resource</option>
+    </param>
+    <param 
+        name='script_text' 
+        label='Type your script' 
+        type='textarea' 
+        value='#!/bin/bash' 
+        help='Type or copy paste the script that is submitted to the selected resource'
+        show_if="TEXT"
+        depends_on='input_method'
+    ></param>
+    <param 
+        name='workspace_script_path' 
+        label='Path to the script in the user workspace' 
+        type='text' 
+        help='Use an absolute path if the script is not in the workflow directory' 
+        value='/pw/path/to/script'
+        show_if="WORKSPACE_PATH"
+        depends_on='input_method'
+    ></param>
+    <param 
+        name='resource_script_path' 
+        label='Path to the script in the resource' 
+        type='text' 
+        help='Use an absolute path if the script is not in the workflow directory' 
+        value='/path/to/script'
+        show_if="RESOURCE_PATH"
+        depends_on='input_method'
+    ></param>
   </inputs>
 </tool>
