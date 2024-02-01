@@ -29,6 +29,6 @@ wait_job() {
             fi
         fi
         echo "    Job ${jobid} status: ${job_status}"
-        sleep 5
+        sleep 15
     done
 }
