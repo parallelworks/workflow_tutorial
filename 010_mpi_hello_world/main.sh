@@ -29,7 +29,7 @@ export CLUSTER_JOB_DIR=${resource_workdir}/pw/${JOB_DIR}/
 
 if [[ ${install_mpi} == "true" ]]; then
     echo; echo; echo INSTALLING Intel-OneAPI-MPI
-    ${sshcmd} 'bash -s' < install_intel_mpi_with_spack.sh
+    ${sshcmd} 'bash -s' < ${APP_DIR}/install_intel_mpi_with_spack.sh
     load_mpi="source ${resource_workdir}/pw/load-intel-oneapi-mpi.sh"
 fi
 
