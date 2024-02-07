@@ -13,7 +13,7 @@ Here are some sample directives to submit SLURM and PBS, respectively:
 
 ```
 #!/bin/bash
-#SBATCH --ntasks-per-node=4
+#SBATCH --ntasks-per-node=2
 #SBATCH --nodes=2
 #SBATCH --job-name=mpi-hello-world
 ```

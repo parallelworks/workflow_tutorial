@@ -2,11 +2,22 @@
   <command interpreter='bash'>010_mpi_hello_world/main.sh</command>
   <cancel interpreter='bash'>cancel.sh</cancel>
   <inputs>
+    <param 
+        name='install_mpi' 
+        type='boolean' 
+        truevalue='Yes' 
+        falsevalue='No' 
+        checked='True'
+        label='Install Intel-OneAPI-MPI?' 
+        help='If yes is selected, the job install intel-oneapi-mpi. Otherwise, you must provide a command to load MPI.'
+    ></param>
    <param name='load_mpi' 
         label='Command to load MPI' 
         type='text' 
         value='source /contrib/__PW_USER__/ompi/env.sh' 
-        help='To load the environment, enter the appropriate command, for example: module load module-name or source path/to/env.sh.' 
+        help='To load the MPI environment, enter the appropriate command, for example: module load module-name or source path/to/env.sh.' 
+        depends_on='install_mpi'
+        show_if="false"
     ></param>
     <param 
         name='np' 
