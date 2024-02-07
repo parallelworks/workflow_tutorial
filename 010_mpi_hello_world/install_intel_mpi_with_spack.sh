@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Check if MPI is already installed
-if [ -f "pw/${load-intel-oneapi-mpi.sh}" ]; then
+if [ -f "pw/load-intel-oneapi-mpi.sh" ]; then
     echo "Intel-OneAPI-MPI is already installed"
     exit 0
 fi
