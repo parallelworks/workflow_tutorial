@@ -26,6 +26,13 @@ export UCONTAINER_JOB_DIR=${PWD}
 # Absolute path to the job directory in the remote resource
 export CLUSTER_JOB_DIR=${resource_workdir}/pw/${JOB_DIR}/
 
+
+if [[ ${install_mpi} == "true" ]]; then
+    echo; echo; echo INSTALLING Intel-OneAPI-MPI
+    ${sshcmd} 'bash -s' < install_intel_mpi_with_spack.sh
+    load_mpi="source ${resource_workdir}/pw/load-intel-oneapi-mpi.sh"
+fi
+
 echo; echo; echo CREATING COMPILE SCRIPT
 # Create compile script
 cat > compile.sh <<HERE
