@@ -25,7 +25,7 @@
         type='integer' 
         min="1" 
         max="100" 
-        help='Number of MPI processes' value='4' 
+        help='Number of MPI processes' value='2' 
     ></param>
    <param name='resource' 
         type='computeResource' 
