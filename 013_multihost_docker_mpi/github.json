@@ -2,7 +2,7 @@
   "repo": "https://github.com/parallelworks/workflow_tutorial.git",
   "branch": "main",
   "xml": "013_multihost_docker_mpi/workflow.xml",
-  "thumbnail": "thumbnail.png",
+  "thumbnail": "013_multihost_docker_mpi/docker.png",
   "readme": "013_multihost_docker_mpi/README.md",
   "sparsecheckout": [
     "013_multihost_docker_mpi"
