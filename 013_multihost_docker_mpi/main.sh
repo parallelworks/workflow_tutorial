@@ -32,7 +32,8 @@ scp ${APP_DIR}/hello-world-mpi-docker.sh ${resource_username}@${resource_publicI
 
 echo; echo; echo SUBMITTING JOB
 export jobid=$(${sshcmd} sbatch ${CLUSTER_JOB_DIR}/hello-world-mpi-docker.sh | tail -1 | awk -F ' ' '{print $4}')
-
+echo "${sshcmd} sbatch ${CLUSTER_JOB_DIR}/hello-world-mpi-docker.sh"
+echo "JOB ID: ${jobid}"
 if [ -z "${jobid}" ]; then
     echo "ERROR: Job submission failed"
     echo "${sshcmd} sbatch ${CLUSTER_JOB_DIR}/hello-world-mpi-docker.sh"
