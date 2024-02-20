@@ -42,7 +42,7 @@ fi
 
 # Write cancel script to remove/cancel the submitted job from the queue if the pw job is canceled
 echo "#!/bin/bash" > cancel.sh
-echo "${sshcmd} ${cancel_cmd} ${jobid}" >> cancel.sh
+echo "${sshcmd} scancel ${jobid}" >> cancel.sh
 chmod +x cancel.sh
 # Wait for submitted job to complete before exiting pw job
 jobschedulertype=SLURM
