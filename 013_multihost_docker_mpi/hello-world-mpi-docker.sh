@@ -18,7 +18,7 @@ CPUS_PER_NODE=$(grep -c '^processor' /proc/cpuinfo)
 NP=$((SLURM_JOB_NUM_NODES*CPUS_PER_NODE))
 
 
-OMPI_CONTAINER_REPO="__OMPI_CONTAINER_REPO__"
+OMPI_CONTAINER_REPO="__OMPI_DOCKER_REPO__"
 # All containers have the same name but run on different nodes
 OMPI_CONTAINER_NAME="mpitest"
 # All containers share the same network
