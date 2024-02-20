@@ -48,7 +48,8 @@ echo "#!/bin/bash" > cancel.sh
 echo "${sshcmd} scancel ${jobid}" >> cancel.sh
 chmod +x cancel.sh
 # Wait for submitted job to complete before exiting pw job
-export jobschedulertype=SLURM
+jobschedulertype=SLURM
+status_cmd=squeue
 set -x
 wait_job
 # Make sure job is canceled before exiting the workflow
