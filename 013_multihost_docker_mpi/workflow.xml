@@ -1,5 +1,5 @@
 <tool id='NA' name='NA'>
-  <command interpreter='bash'>011_mpi_hello_world/main.sh</command>
+  <command interpreter='bash'>013_multihost_docker_mpi/main.sh</command>
   <cancel interpreter='bash'>cancel.sh</cancel>
   <inputs>
      <param name='resource' 
