@@ -2,6 +2,7 @@
 #SBATCH --ntasks-per-node=1
 #SBATCH --exclusive
 #SBATCH --nodes=__NODES__
+#SBATCH --chdir=__CLUSTER_JOB_DIR__
 #SBATCH -o __LOG_FILE__
 #SBATCH -e __LOG_FILE__
 #SBATCH --partition=__PARTITION__
