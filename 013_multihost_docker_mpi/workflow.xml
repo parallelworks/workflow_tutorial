@@ -1,0 +1,33 @@
+<tool id='NA' name='NA'>
+  <command interpreter='bash'>011_mpi_hello_world/main.sh</command>
+  <cancel interpreter='bash'>cancel.sh</cancel>
+  <inputs>
+     <param name='resource' 
+        type='computeResource' 
+        label='Resource' 
+        hideUserWorkspace='true'
+        hideDisconnectedResources='true'
+        help='Choose the resource for script submission'
+    ></param>
+    <param name='ompi_docker_repo' 
+        label='OMPI Docker Repository' 
+        type='text' 
+        value='avidalto/openmpi-ubuntu:v3' 
+        help='Docker repository with OpenMPI' 
+    ></param>
+   <param name='partition' 
+        label='SLURM Partition' 
+        type='text' 
+        value='' 
+        help='Value of the --partition SLURM directive' 
+    ></param>
+    <param 
+        name='nodes' 
+        label='Number of nodes' 
+        type='integer' 
+        min="1" 
+        max="100" 
+        help='Value of the --nodes SLURM directive' value='2' 
+    ></param>
+    </inputs>
+</tool>
