@@ -38,7 +38,7 @@ wait_job() {
             # If job status is empty job is no longer running
             if [ -z "${job_status}" ]; then
                 job_status=$($sshcmd sacct -j ${jobid}  --format=state | tail -n1)
-                #break
+                break
             fi
         elif [[ ${jobschedulertype} == "PBS" ]]; then
             get_pbs_job_status
