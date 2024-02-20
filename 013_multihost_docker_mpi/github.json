@@ -1,7 +1,10 @@
 {
-    "repo": "https://github.com/parallelworks/simple_bash_demo.git",
-    "branch": "main",
-    "xml": "011_mpi_hello_world/workflow.xml",
-    "thumbnail": "thumbnail.png",
-    "readme": "README.md"
-  }
+  "repo": "https://github.com/parallelworks/workflow_tutorial.git",
+  "branch": "main",
+  "xml": "013_multihost_docker_mpi/workflow.xml",
+  "thumbnail": "thumbnail.png",
+  "readme": "013_multihost_docker_mpi/README.md",
+  "sparsecheckout": [
+    "013_multihost_docker_mpi"
+  ]
+}
