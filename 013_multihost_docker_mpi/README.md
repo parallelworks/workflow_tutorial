@@ -3,4 +3,6 @@ This workflow demonstrates executing a multinode MPI job within a SLURM cluster 
 - `main.sh` submits hello-world-mpi-docker.sh to the chosen SLURM resource through SSH. 
 - `hello-world-mpi-docker.sh` is an independent script illustrating the utilization of multinode MPI with Docker in a SLURM environment, employing Docker Swarm to establish a container cluster.
 
+For the code implementation, you can refer to the accompanying GitHub repository: [GitHub Repository](https://github.com/parallelworks/workflow_tutorial/edit/main/013_multihost_docker_mpi/)
+
 Users can specify a Docker repository containing OpenMPI and configure the number of nodes and partition scheduler directives for job submission. Notably, all available cores are utilized for the MPI hello world, thus `--exclusive` scheduler directive is hardcoded in `hello-world-mpi-docker.sh`. Additionally, `--ntasks-per-node` is set to 1 in `hello-world-mpi-docker.sh`, reflecting a single Docker container per node.
