@@ -19,6 +19,8 @@ export CLUSTER_JOB_DIR=${resource_workdir}/pw/${JOB_DIR}/
 echo; echo; echo CREATING SLURM SCRIPT
 sed -i "s/__OMPI_CONTAINER_REPO__/${ompi_container_repo}/g" ${APP_DIR}/hello-world-mpi-docker.sh
 sed -i "s/__NODES__/${nodes}/g" ${APP_DIR}/hello-world-mpi-docker.sh
+sed -i "s|__LOG_FILE__|${CLUSTER_JOB_DIR}/logs.out|g" ${APP_DIR}/hello-world-mpi-docker.sh
+
 if [ -z "${partition}" ]; then
     sed -i '/#SBATCH --partition=__PARTITION__/d' ${APP_DIR}/hello-world-mpi-docker.sh
 else

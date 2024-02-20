@@ -2,7 +2,10 @@
 #SBATCH --ntasks-per-node=1
 #SBATCH --exclusive
 #SBATCH --nodes=__NODES__
+#SBATCH -o __LOG_FILE__
+#SBATCH -e __LOG_FILE__
 #SBATCH --partition=__PARTITION__
+
 
 # Description:
 # This script demonstrates running a multinode MPI job in a SLURM cluster using Docker.
@@ -92,7 +95,7 @@ sudo docker exec ${OMPI_CONTAINER_NAME} mpirun \
     --mca plm_rsh_agent "ssh -q -o StrictHostKeyChecking=no" \
     -np ${NP} \
     --hostfile mpi-container.hosts \
-    ././mpi_hello_world &> mpi_hello_world.out
+    ./mpi_hello_world &> mpi_hello_world.out
 
 cat mpi_hello_world.out
 
