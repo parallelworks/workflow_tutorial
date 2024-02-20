@@ -33,6 +33,13 @@ scp ${APP_DIR}/hello-world-mpi-docker.sh ${resource_username}@${resource_publicI
 echo; echo; echo SUBMITTING JOB
 export jobid=$(${sshcmd} sbatch ${CLUSTER_JOB_DIR}/hello-world-mpi-docker.sh | tail -1 | awk -F ' ' '{print $4}')
 
+if [ -z "${jobid}" ]; then
+    echo "ERROR: Job submission failed"
+    echo "${sshcmd} sbatch ${CLUSTER_JOB_DIR}/hello-world-mpi-docker.sh"
+    exit 1
+fi
+
+
 # Write cancel script to remove/cancel the submitted job from the queue if the pw job is canceled
 echo "#!/bin/bash" > cancel.sh
 echo "${sshcmd} ${cancel_cmd} ${jobid}" >> cancel.sh
