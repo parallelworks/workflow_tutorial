@@ -25,7 +25,7 @@ inputs = {
     "startCmd": "001_single_resource_command/main.sh"
 }
 
-# SUBMIT POST REQUEST
+# SUBMIT POST REQUEST TO CREATE NEW WORKFLOW JOB
 body = {
     "variables": inputs
 }
