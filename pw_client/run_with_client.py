@@ -14,8 +14,7 @@ PW_KEY: str = os.environ['PW_API_KEY']
 workflow_name: str = 'simple_bash_demo'
 
 # JOB INPUTS
-# This is the dictionary corresponding to the JSON file /pw/jobs/<workflow-name>/<job-number>/inputs.json
-# You can also view the contents of this in https://cloud.parallel.works/workflows/<workflow-name>/json
+# You can view the contents of this in https://cloud.parallel.works/workflows/<workflow-name>/json
 inputs = {
     "command": "sleep 10",
     "resource_1": {
