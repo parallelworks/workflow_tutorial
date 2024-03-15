@@ -15,11 +15,13 @@
         value='avidalto/openmpi-ubuntu:v3' 
         help='Docker repository with OpenMPI' 
     ></param>
-   <param name='partition' 
-        label='SLURM Partition' 
-        type='text' 
-        value='' 
-        help='Value of the --partition SLURM directive' 
+    <param 
+      name='_sch__dd_partition_e_' 
+      label='SLURM partition' 
+      type='dynamicPartitionDropdown' 
+      resource='resource'
+      help='Partition to submit the interactive job. Leave empty to let SLURM pick the optimal option.' 
+      optional='true'   
     ></param>
     <param 
         name='nodes' 

@@ -14,7 +14,7 @@
    <param name='load_mpi' 
         label='Command to load MPI' 
         type='text' 
-        value='source /contrib/__PW_USER__/ompi/env.sh' 
+        value='' 
         help='To load the MPI environment, enter the appropriate command, for example: module load module-name or source path/to/env.sh.' 
         depends_on='install_mpi'
         show_if="false"
