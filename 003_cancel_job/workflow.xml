@@ -14,6 +14,7 @@
         label='Resource work directory' 
         type='text' 
         value='' 
+        optional='true'
         help='Absolute path to the work directory on the remote resource. If left empty the default work directory for the resource is used.' 
     ></param>
     <param 

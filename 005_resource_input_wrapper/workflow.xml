@@ -23,11 +23,12 @@
       <param 
         name='_sch__dd_partition_e_' 
         label='SLURM partition' 
-        type='text' 
+        type='dynamicPartitionDropdown' 
+        resource='pwrl_host1.resource'
         help='Partition to submit the interactive job. Leave empty to let SLURM pick the optimal option.' 
-        value=''
-        show_if="SLURM"
         depends_on='pwrl_host1.jobschedulertype'
+        show_if='SLURM'
+        optional='true'   
       ></param>
       <param 
         name='_sch__dd_cpus_d_per_d_task_e_' 
@@ -57,13 +58,15 @@
         value='01:00:00'
         show_if="SLURM"
         depends_on='pwrl_host1.jobschedulertype'
+        optional='true'
       ></param>
       <param 
-        name='scheduler_directives' 
+        name='scheduler_directives_slurm' 
         label='Scheduler directives' 
         type='text' 
         help='e.g. --mem=1000;--gpus-per-node=1 - Use the semicolon character ; to separate parameters. Do not include the SBATCH keyword.' 
         value='' 
+        optional='true'
         show_if="SLURM"
         depends_on='pwrl_host1.jobschedulertype'
       ></param>
@@ -77,16 +80,17 @@
         depends_on='pwrl_host1.jobschedulertype'
       ></param>
       <param 
-        name='scheduler_directives' 
+        name='scheduler_directives_pbs' 
         label='Scheduler directives' 
         type='text' 
         help='e.g. -l mem=1000;-l nodes=1:ppn=4 - Use the semicolon character ; to separate parameters. Do not include the PBS keyword.' 
         value='' 
+        optional='true'
         show_if="PBS"
         depends_on='pwrl_host1.jobschedulertype'
       ></param>
     </section>
-    <section name='pwrl_host2' type='section' title='Host 1' expanded='true'>
+    <section name='pwrl_host2' type='section' title='Host 2' expanded='true'>
       <param 
         name='nports' 
         label='Number of Ports to Reserve' 
@@ -108,11 +112,12 @@
       <param 
         name='_sch__dd_partition_e_' 
         label='SLURM partition' 
-        type='text' 
+        type='dynamicPartitionDropdown' 
+        resource='pwrl_host2.resource'
         help='Partition to submit the interactive job. Leave empty to let SLURM pick the optimal option.' 
-        value=''
-        show_if="SLURM"
         depends_on='pwrl_host2.jobschedulertype'
+        show_if='SLURM'
+        optional='true'   
       ></param>
       <param 
         name='_sch__dd_cpus_d_per_d_task_e_' 
@@ -141,15 +146,17 @@
         help='e.g. 01:00:00 - Amount of time slurm will honor the interactive session.' 
         value='01:00:00'
         show_if="SLURM"
+        optional='true'
         depends_on='pwrl_host2.jobschedulertype'
       ></param>
       <param 
-        name='scheduler_directives' 
+        name='scheduler_directives_slurm' 
         label='Scheduler directives' 
         type='text' 
         help='e.g. --mem=1000;--gpus-per-node=1 - Use the semicolon character ; to separate parameters. Do not include the SBATCH keyword.' 
         value='' 
         show_if="SLURM"
+        optional='true'
         depends_on='pwrl_host2.jobschedulertype'
       ></param>
       <param 
@@ -162,16 +169,17 @@
         depends_on='pwrl_host2.jobschedulertype'
       ></param>
       <param 
-        name='scheduler_directives' 
+        name='scheduler_directives_pbs' 
         label='Scheduler directives' 
         type='text' 
         help='e.g. -l mem=1000;-l nodes=1:ppn=4 - Use the semicolon character ; to separate parameters. Do not include the PBS keyword.' 
         value='' 
+        optional='true'
         show_if="PBS"
         depends_on='pwrl_host2.jobschedulertype'
       ></param>
     </section>
-    <section name='pwrl_host3' type='section' title='Host 1' expanded='true'>
+    <section name='pwrl_host3' type='section' title='Host 3' expanded='true'>
       <param 
         name='nports' 
         label='Number of Ports to Reserve' 
@@ -193,11 +201,12 @@
       <param 
         name='_sch__dd_partition_e_' 
         label='SLURM partition' 
-        type='text' 
+        type='dynamicPartitionDropdown' 
+        resource='pwrl_host3.resource'
         help='Partition to submit the interactive job. Leave empty to let SLURM pick the optimal option.' 
-        value=''
-        show_if="SLURM"
         depends_on='pwrl_host3.jobschedulertype'
+        show_if='SLURM'
+        optional='true'   
       ></param>
       <param 
         name='_sch__dd_cpus_d_per_d_task_e_' 
@@ -229,13 +238,14 @@
         depends_on='pwrl_host3.jobschedulertype'
       ></param>
       <param 
-        name='scheduler_directives' 
+        name='scheduler_directives_slurm' 
         label='Scheduler directives' 
         type='text' 
         help='e.g. --mem=1000;--gpus-per-node=1 - Use the semicolon character ; to separate parameters. Do not include the SBATCH keyword.' 
         value='' 
         show_if="SLURM"
         depends_on='pwrl_host3.jobschedulertype'
+        optional='true'
       ></param>
       <param 
         name='_sch__d_q___' 
@@ -247,13 +257,14 @@
         depends_on='pwrl_host3.jobschedulertype'
       ></param>
       <param 
-        name='scheduler_directives' 
+        name='scheduler_directives_pbs' 
         label='Scheduler directives' 
         type='text' 
         help='e.g. -l mem=1000;-l nodes=1:ppn=4 - Use the semicolon character ; to separate parameters. Do not include the PBS keyword.' 
         value='' 
         show_if="PBS"
         depends_on='pwrl_host3.jobschedulertype'
+        optional='true'
       ></param>
     </section>
   </inputs>

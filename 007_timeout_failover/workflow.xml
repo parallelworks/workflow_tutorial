@@ -28,6 +28,7 @@
         type='text' 
         help='e.g. --partition=compute;--tasks-per-node=1 - Use the semicolon character ; to separate parameters. Do not include the SBATCH keyword.' 
         value=''
+        optional='true'
         show_if="SLURM"
         depends_on='pwrl_main.jobschedulertype'
       ></param>
@@ -60,6 +61,7 @@
         type='text' 
         help='e.g. --partition=compute;--tasks-per-node=1 - Use the semicolon character ; to separate parameters. Do not include the SBATCH keyword.' 
         value=''
+        optional='true'
         show_if="SLURM"
         depends_on='pwrl_burst.jobschedulertype'
       ></param>
