@@ -31,17 +31,20 @@ if [[ ${input_method} == "TEXT" ]] || [[ ${input_method} == "WORKSPACE_PATH" ]];
 fi
 
 # SUBMIT JOB
+echo; echo "Submitting job with command:"
 if [[ ${jobschedulertype} == "SLURM" ]]; then
     submit_cmd="sbatch"
     cancel_cmd="scancel"
     status_cmd="squeue" 
     # Submit job to SLURM partition and save jobid
+    echo "${sshcmd} ${submit_cmd} ${resource_script_path}"
     export jobid=$(${sshcmd} ${submit_cmd} ${resource_script_path} | tail -1 | awk -F ' ' '{print $4}')
 elif [[ ${jobschedulertype} == "PBS" ]]; then
     submit_cmd="qsub"
     cancel_cmd="qdel"
     status_cmd="qstat"
     # Submit job to PBS queue and save jobid
+    echo "${sshcmd} ${submit_cmd} ${resource_script_path}"
     export jobid=$(${sshcmd} ${submit_cmd} ${resource_script_path})
 else
     # Run script directly in the controller/login node
@@ -50,7 +53,16 @@ else
     # Exit script with the exit code of the above command
     exit $?
 fi
-echo "Submitted job ID: ${jobid}"
+
+if [[ -z ${jobid} ]]; then
+    echo; echo;
+    echo "Failed to submit job to the scheduler with command:"
+    echo "${sshcmd} ${submit_cmd} ${resource_script_path}"
+    echo; echo "Exiting workflow."
+    exit 1
+fi
+
+echo; echo "Submitted job ID: ${jobid}"
 
 if [[ ${wait_for_job} == "true" ]]; then
     # Write cancel script to remove/cancel the submitted job from the queue if the pw job is canceled
