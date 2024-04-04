@@ -32,3 +32,15 @@ wait_job() {
         sleep 15
     done
 }
+
+check_slurm() {
+    # Run ps command to check if slurmctld is running and exclude the grep process
+    result=$(${sshcmd} ps aux | grep slurmctld | grep -v grep)
+
+    # Check if the result is empty
+    if [ -z "$result" ]; then
+        echo "ERROR: slurmctld is not running in the selected resource ${resource_name}"
+        echo "       Exiting workflow!"
+        exit 1
+    fi
+}

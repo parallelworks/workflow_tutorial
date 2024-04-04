@@ -31,8 +31,9 @@ if [[ ${input_method} == "TEXT" ]] || [[ ${input_method} == "WORKSPACE_PATH" ]];
 fi
 
 # SUBMIT JOB
-echo; echo "Submitting job with command:"
+echo; echo "Submitting job"
 if [[ ${jobschedulertype} == "SLURM" ]]; then
+    check_slurm
     submit_cmd="sbatch"
     cancel_cmd="scancel"
     status_cmd="squeue" 
