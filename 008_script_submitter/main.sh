@@ -33,6 +33,7 @@ fi
 # SUBMIT JOB
 echo; echo "Submitting job with command:"
 if [[ ${jobschedulertype} == "SLURM" ]]; then
+    check_slurm
     submit_cmd="sbatch"
     cancel_cmd="scancel"
     status_cmd="squeue" 
