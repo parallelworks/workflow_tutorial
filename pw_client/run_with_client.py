@@ -1,6 +1,16 @@
 import requests, os, json
 from time import sleep
 from datetime import datetime
+from base64 import b64encode
+
+def encode_string_to_base64(text):
+    # Convert the string to bytes
+    text_bytes = text.encode('utf-8')
+    # Encode the bytes to base64
+    encoded_bytes = b64encode(text_bytes)
+    # Convert the encoded bytes back to a string
+    encoded_string = encoded_bytes.decode('utf-8')
+    return encoded_string
 
 def printd(*args):
     print(datetime.now(), *args)
@@ -8,7 +18,7 @@ def printd(*args):
 
 # LOAD PLATFORM HOST AND API KEY FROM ENVIRONMENT
 PW_PLATFORM_HOST: str = os.environ['PW_PLATFORM_HOST']
-PW_KEY: str = os.environ['PW_API_KEY']
+HEADERS = {"Authorization": "Basic {}".format(encode_string_to_base64(os.environ['PW_API_KEY']))}
 
 # DEFINE JOB
 workflow_name: str = 'simple_bash_demo'

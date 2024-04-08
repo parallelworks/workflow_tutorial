@@ -11,7 +11,7 @@ getOpenPort() {
 
     # Loop until an odd number is found
     while true; do
-        openPort=$(curl -s "https://${PARSL_CLIENT_HOST}/api/v2/usercontainer/getSingleOpenPort?minPort=${minPort}&maxPort=${maxPort}&key=${PW_API_KEY}")
+        openPort=$(curl -s "https://${PARSL_CLIENT_HOST}/api/v2/usercontainer/getSingleOpenPort?minPort=${minPort}&maxPort=${maxPort}" -H "Authorization: Basic $(echo ${PW_API_KEY}|base64)")
         # Check if the number is odd
         if [[ $(($openPort % 2)) -eq 1 ]]; then
             break
