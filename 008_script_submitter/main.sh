@@ -12,13 +12,11 @@ export sshcmd="ssh -o StrictHostKeyChecking=no ${resource_username}@${resource_p
 export PW_JOB_ID=$(pwd | rev | cut -d'/' -f1-2 | rev | tr '/' '-')
 
 if [[ ${input_method} == "TEXT" ]]; then
-    # FIXME: This should not be needed:
-    script_text=$(cat inputs.json | grep script_text | awk -F': ' '{print $2}' | sed 's/[",]//g')
     # WRITE SCRIPT
     # Path to the script in the user workspace
     workspace_script_path="${PWD}/script.sh"
     echo "Writing script to ${workspace_script_path}"
-    echo -e ${script_text} > ${workspace_script_path}
+    jq -r '.script_text' inputs.json | sed 's/\\n/\n/g' > ${workspace_script_path}
     chmod +x ${workspace_script_path}
 fi
 
