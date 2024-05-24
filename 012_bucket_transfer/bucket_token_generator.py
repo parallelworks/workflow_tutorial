@@ -54,7 +54,7 @@ if not (os.getenv('PW_PLATFORM_HOST') and os.getenv('PW_API_KEY')):
 
 PW_PLATFORM_HOST = os.environ.get('PW_PLATFORM_HOST')
 HEADERS = {"Authorization": "Basic {}".format(encode_string_to_base64(os.environ['PW_API_KEY']))}
-STORAGE_URL = f'https://{PW_PLATFORM_HOST}/api/v2/storage'
+STORAGE_URL = f'https://{PW_PLATFORM_HOST}/api/storage'
 BUCKET_TOKEN_URL = f'https://{PW_PLATFORM_HOST}/api/v2/vault/getBucketToken'
 
 
