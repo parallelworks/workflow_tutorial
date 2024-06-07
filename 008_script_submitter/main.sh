@@ -72,4 +72,9 @@ if [[ ${wait_for_job} == "true" ]]; then
     wait_job
     # Make sure job is canceled before exiting the workflow
     ./cancel.sh
+
+    if [[ ${jobschedulertype} == "SLURM" ]] && ! [[ -z ${workspace_script_path} ]]; then
+        print_slurm_logs ${workspace_script_path}
+    fi
+
 fi

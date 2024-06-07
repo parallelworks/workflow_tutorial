@@ -44,3 +44,13 @@ check_slurm() {
         exit 1
     fi
 }
+
+# Function to print the SLURM logs
+print_slurm_logs() {
+    local script_path=$1
+    for log_file in $(grep -E '#SBATCH\s+--?(output|error)|#SBATCH\s+-?(o|e)|#SBATCH\s+-?(oe|eo)' ${script_path} | awk '{print $3}' | uniq); do
+        echo "${sshcmd} cat ${log_file}"
+        ${sshcmd} cat ${log_file}
+        echo
+    done
+}
