@@ -44,3 +44,14 @@ check_slurm() {
         exit 1
     fi
 }
+
+# Function to print the SLURM logs
+print_slurm_logs() {
+    echo; echo; "SLURM LOGS"
+    local log_file_paths=$1
+    for log_file in ${log_file_paths}; do
+        echo "${sshcmd} cat ${log_file}"
+        ${sshcmd} cat ${log_file}
+        echo
+    done
+}

@@ -63,13 +63,21 @@ fi
 
 echo; echo "Submitted job ID: ${jobid}"
 
-if [[ ${wait_for_job} == "true" ]]; then
+if [[ ${wait_for_job} == "true" ]] || [[ ${wait_for_job} == "Yes" ]]; then
     # Write cancel script to remove/cancel the submitted job from the queue if the pw job is canceled
     echo "#!/bin/bash" > cancel.sh
     echo "${sshcmd} ${cancel_cmd} ${jobid}" >> cancel.sh
     chmod +x cancel.sh
+    if [[ ${jobschedulertype} == "SLURM" ]]; then
+        log_file_paths=$(${sshcmd} scontrol show job ${jobid} | grep -E "StdOut|StdErr" | awk -F= '{print $2}' | uniq)
+    fi
     # Wait for submitted job to complete before exiting pw job
     wait_job
     # Make sure job is canceled before exiting the workflow
     ./cancel.sh
+
+    if [[ ${jobschedulertype} == "SLURM" ]]; then
+        print_slurm_logs "${log_file_paths}"
+    fi
+
 fi
