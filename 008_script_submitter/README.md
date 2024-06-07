@@ -13,7 +13,8 @@ hostname
 #SBATCH --job-name=my_job_name
 #SBATCH --ntasks=1
 #SBATCH --time=00:10:00
-#SBATCH --oe=my_job_name.out
+#SBATCH --output=my_job_name_%j.out
+#SBATCH --error=my_job_name_%j.err
 hostname
 ```
 
