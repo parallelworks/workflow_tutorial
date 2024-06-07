@@ -36,7 +36,8 @@
         type='boolean' 
         truevalue='Yes' 
         falsevalue='No' 
-        checked='True'
+        checked='true'
+        value='true'
         label='Wait for the SLURM job or fire and forget? ' 
         help='If yes is selected, the PW job waits for the SLURM job to complete while continuously monitoring its status and the possibility to cancel the SLURM job when the PW job is canceled.'
         show_if="['SLURM', 'PBS']"
