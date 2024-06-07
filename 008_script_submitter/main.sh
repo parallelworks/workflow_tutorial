@@ -63,7 +63,7 @@ fi
 
 echo; echo "Submitted job ID: ${jobid}"
 
-if [[ ${wait_for_job} == "true" ]]; then
+if [[ ${wait_for_job} == "true" ]] || [[ ${wait_for_job} == "Yes" ]]; then
     # Write cancel script to remove/cancel the submitted job from the queue if the pw job is canceled
     echo "#!/bin/bash" > cancel.sh
     echo "${sshcmd} ${cancel_cmd} ${jobid}" >> cancel.sh
