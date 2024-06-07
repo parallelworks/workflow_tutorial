@@ -25,7 +25,6 @@
         truevalue='Yes'
         falsevalue='No'
         checked='true'
-        value='true'
         show_if="['SLURM', 'PBS']"
         depends_on='jobschedulertype'
         label='Wait for the SLURM job or fire and forget? '
