@@ -8,7 +8,6 @@
         truevalue='Yes' 
         falsevalue='No' 
         checked='true'
-        value='true'
         label='Install Intel-OneAPI-MPI?' 
         help='If yes is selected, the job install intel-oneapi-mpi. Otherwise, you must provide a command to load MPI.'
     ></param>
