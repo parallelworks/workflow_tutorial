@@ -52,6 +52,7 @@ cd ${CLUSTER_JOB_DIR}
 mpirun -np ${np} ./mpitest &> mpitest.out
 cat mpitest.out
 HERE
+chmod +x run.sh
 cat run.sh
 
 echo; echo; echo TRANSFERRING NECESSARY FILES TO CLUSTER
