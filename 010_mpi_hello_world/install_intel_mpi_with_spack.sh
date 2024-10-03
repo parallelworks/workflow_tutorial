@@ -21,8 +21,5 @@ yes | spack module lmod refresh gcc-runtime intel-oneapi-mpi intel-oneapi-compil
 cat > load-intel-oneapi-mpi.sh <<HERE
 #!/bin/bash
 . $HOME/pw/spack/share/spack/setup-env.sh
-source /usr/share/lmod/8.7.7/init/bash
-export MODULEPATH=$MODULEPATH:$HOME/pw/spack/share/spack/lmod/linux-centos7-x86_64/Core
-module load intel-oneapi-mpi/2021.11.0-c7j5bm5
-module load intel-oneapi-compilers/2024.0.2-z5h22vh
+spack load intel-oneapi-compilers@2024.2.1  intel-oneapi-mpi@2021.13.1
 HERE
