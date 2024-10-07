@@ -21,8 +21,6 @@ echo ${sshcmd}
 
 # JOB_DIR=<workflow-name>/<job-number>
 JOB_DIR=$(pwd | rev | cut -d'/' -f1-2 | rev)
-# Absolute path to the job directory in the user space
-export UCONTAINER_JOB_DIR=${PWD}
 # Absolute path to the job directory in the remote resource
 export CLUSTER_JOB_DIR=${resource_workdir}/pw/${JOB_DIR}/
 
