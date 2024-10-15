@@ -1,80 +1,68 @@
-jobs:
-  main:
-    steps:
-
-      - name: Install Intel-OneAPI-MPI
-        if: ${{ inputs.install_mpi }}
-        run: ssh -o StrictHostKeyChecking=no ${{ inputs.resource.ip }} 'bash -s' < ./010_mpi_hello_world/install_intel_mpi_with_spack.sh
-      - name: Set Load MPI Environment Command
-        run: |
-            if ${{ inputs.install_mpi }}; then
-                echo load_mpi="source ~/pw/software/load-intel-oneapi-mpi.sh" >> $OUTPUTS
-            else
-                echo load_mpi=${{ inputs.load_mpi }} >> $OUTPUTS
-            fi
-
-      - name: Create Compile Script
-        run: |
-          cat > compile.sh <<HERE
-          #!/bin/bash
-          ${{ needs.main.outputs.load_mpi }}
-          cd ~/${PWD}
-          mpicc -o mpitest mpitest.c
-          chmod +x mpitest
-          HERE
-          cat compile.sh
-'on':
-  execute:
-    inputs:
-      install_mpi:
-        label: Install Intel-OneAPI-MPI?
-        type: boolean
-        default: true
-        tooltip: If yes is selected, the job install intel-oneapi-mpi. Otherwise, you must provide a command to load MPI.
-      load_mpi:
-        label: Command to load MPI
-        type: string
-        hidden: ${{ inputs.install_mpi }}
-        ignore: ${{ .hidden }}
-        optional: ${{ .hidden }}
-        tooltip: 'To load the MPI environment, enter the appropriate command, for example: module load module-name or source path/to/env.sh.'
-      np:
-        label: Number of Processes
-        type: number
-        min: 2
-        max: 100
-        default: 2
-        tooltip: Number of MPI processes
-      resource:
-        label: Resource
-        type: compute-clusters
-        tooltip: Choose the resource for script submission
-      jobschedulertype:
-        label: Select Controller, SLURM Partition or PBS Queue
-        type: dropdown
-        options:
-          - label: Controller or Login Node
-            value: CONTROLLER
-          - label: SLURM Partition
-            value: SLURM
-          - label: PBS Queue
-            value: PBS
-        tooltip: Job will submitted using SSH, sbatch or qsub, respectively
-      scheduler_directives:
-        label: Type the scheduler directives
-        type: editor
-        default: '#!/bin/bash'
-        hidden: ${{ inputs.jobschedulertype === CONTROLLER }}
-        optional: ${{.hi}}
-      wait_for_job:
-        label: Wait for the PBS job or fire and forget?
-        type: boolean
-        default: true
-        hidden: ${{ inputs.jobschedulertype === CONTROLLER }}
-        ignore: ${{ .hidden }}
-        optional: ${{ .hidden }}
-        tooltip: If yes is selected, the PW job waits for the SLURM or PBS job to complete while continuously monitoring its status and the possibility to cancel the SLURM or PBS job when the PW job is canceled
-      ssh_cmd:
-        type: string
-        hidden: true
-        default: ssh -o StrictHostKeyChecking=no ${{ inputs.resource.ip }}
+<tool id='NA' name='NA'>
+  <command interpreter='bash'>010_mpi_hello_world/main.sh</command>
+  <cancel interpreter='bash'>cancel.sh</cancel>
+  <inputs>
+    <param 
+        name='install_mpi' 
+        type='boolean' 
+        truevalue='Yes' 
+        falsevalue='No' 
+        checked='true'
+        value='true'
+        label='Install Intel-OneAPI-MPI?' 
+        help='If yes is selected, the job install intel-oneapi-mpi. Otherwise, you must provide a command to load MPI.'
+    ></param>
+   <param name='load_mpi' 
+        label='Command to load MPI' 
+        type='text' 
+        value='' 
+        help='To load the MPI environment, enter the appropriate command, for example: module load module-name or source path/to/env.sh.' 
+        depends_on='install_mpi'
+        show_if="false"
+    ></param>
+    <param 
+        name='np' 
+        label='Number of processes' 
+        type='integer' 
+        min="1" 
+        max="100" 
+        help='Number of MPI processes' value='2' 
+    ></param>
+   <param name='resource' 
+        type='computeResource' 
+        label='Resource' 
+        hideUserWorkspace='true'
+        hideDisconnectedResources='true'
+        help='Choose the resource for script submission'
+    ></param>
+    <param 
+        name='jobschedulertype' 
+        type='select' 
+        label='Select Controller, SLURM Partition or PBS Queue' 
+        help='Job will submitted using SSH, sbatch or qsub, respectively'   
+        multiple='false'>
+            <option value="CONTROLLER" selected="true">Controller or Login Node</option>
+            <option value="SLURM">SLURM Partition</option>
+            <option value="PBS">PBS Queue</option>
+    </param>
+    <param 
+        name='wait_for_job' 
+        type='boolean' 
+        truevalue='Yes' 
+        falsevalue='No' 
+        checked='true'
+        value='true'
+        label='Wait for the PBS job or fire and forget? ' 
+        help='If yes is selected, the PW job waits for the PBS job to complete while continuously monitoring its status and the possibility to cancel the PBS job when the PW job is canceled.'
+        depends_on='jobschedulertype'
+        show_if="['SLURM', 'PBS']"
+    ></param>
+    <param 
+        name='scheduler_directives' 
+        label='Type the scheduler directives' 
+        type='textarea' 
+        value='#!/bin/bash' 
+        help='Type or copy paste the scheduler directives for the MPI job'
+    ></param>
+    </inputs>
+</tool>

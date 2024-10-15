@@ -4,9 +4,25 @@ jobs:
 
       - name: Install Intel-OneAPI-MPI
         if: ${{ inputs.install_mpi }}
+        run: ssh -o StrictHostKeyChecking=no ${{ inputs.resource.ip }} 'bash -s' < ./010_mpi_hello_world/install_intel_mpi_with_spack.sh
+      - name: Set Load MPI Environment Command
         run: |
-           ${{ inputs.ssh_cmd}} 'bash -s' < ./010_mpi_hello_world/install_intel_mpi_with_spack.sh
-         
+            if ${{ inputs.install_mpi }}; then
+                echo load_mpi="source ~/pw/software/load-intel-oneapi-mpi.sh" >> $OUTPUTS
+            else
+                echo load_mpi=${{ inputs.load_mpi }} >> $OUTPUTS
+            fi
+
+      - name: Create Compile Script
+        run: |
+          cat > compile.sh <<HERE
+          #!/bin/bash
+          ${{ needs.main.outputs.load_mpi }}
+          cd ~/${PWD}
+          mpicc -o mpitest mpitest.c
+          chmod +x mpitest
+          HERE
+          cat compile.sh
 'on':
   execute:
     inputs:
