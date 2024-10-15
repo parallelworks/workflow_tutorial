@@ -1,9 +1,11 @@
 jobs:
   main:
     steps:
+
       - name: Install Intel-OneAPI-MPI
         if: ${{ inputs.install_mpi }}
         run: ssh -o StrictHostKeyChecking=no ${{ inputs.resource.ip }} 'bash -s' < ./010_mpi_hello_world/install_intel_mpi_with_spack.sh
+      
       - name: Set Load MPI Environment Command
         run: |
             if ${{ inputs.install_mpi }}; then
@@ -11,16 +13,84 @@ jobs:
             else
                 echo load_mpi=${{ inputs.load_mpi }} >> $OUTPUTS
             fi
+      
       - name: Create Compile Script
         run: |
           cat > compile.sh <<HERE
           #!/bin/bash
           ${{ needs.main.outputs.load_mpi }}
-          cd ~/${PWD}
+          cd ~/${PWD/#$HOME/}
           mpicc -o mpitest mpitest.c
           chmod +x mpitest
           HERE
+          chmod +x compile.sh
           cat compile.sh
+      
+      - name: Create Run Script
+        run: |
+          cat > run.sh <<HERE
+          ${{ inputs.scheduler_directives }}
+          ${{ needs.main.outputs.load_mpi }}
+          cd ~/${PWD/#$HOME/}
+          mpirun -np ${{ inputs.np }} ./mpitest &> mpitest.out
+          cat mpitest.out
+          HERE
+          chmod +x run.sh
+          cat run.sh
+      
+      - name: Transfer Files from Workspace to Cluster
+        run: |
+          ssh -o StrictHostKeyChecking=no ${{ inputs.resource.ip }} mkdir -p ~/${PWD/#$HOME/}
+          scp run.sh ./010_mpi_hello_world/mpitest.c ${{ inputs.resource.ip }}:~/${PWD/#$HOME/}
+      
+      - name: Compiling App
+        run: ssh -o StrictHostKeyChecking=no ${{ inputs.resource.ip }} 'bash -s' < ./compile.sh
+      
+      - name: Run App in Controller Node
+        if: ${{ inputs.jobschedulertype === CONTROLLER }}
+        run: ssh -o StrictHostKeyChecking=no ${{ inputs.resource.ip }} ~/${PWD/#$HOME/}/run.sh
+      
+      - name: Submit App to SLURM Partition
+        if: ${{ inputs.jobschedulertype === SLURM }}
+        run: |
+          jobid=$(ssh -o StrictHostKeyChecking=no ${{ inputs.resource.ip }} sbatch ~/${PWD/#$HOME/}/run.sh  | tail -1 | awk -F ' ' '{print $4}')
+          # Check if jobid is empty and exit with error if true
+          if [[ -z "${jobid}" ]]; then
+              echo "Error: Job submission failed. jobid is empty." >&2
+              exit 1
+          fi
+          echo jobid=${jobid} >> $OUTPUTS
+
+      - name: Submit App to PBS Queue
+        if: ${{ inputs.jobschedulertype === PBS }}
+        run: |
+          jobid=$(ssh -o StrictHostKeyChecking=no ${{ inputs.resource.ip }} qsub ~/${PWD/#$HOME/}/run.sh)
+          # Check if jobid is empty and exit with error if true
+          if [[ -z "${jobid}" ]]; then
+              echo "Error: Job submission failed. jobid is empty." >&2
+              exit 1
+          fi
+          echo jobid=${jobid} >> $OUTPUTS
+
+      - name: Wait for App to Run
+        if: ${{ inputs.wait_for_job === true && inputs.jobschedulertype !== CONTROLLER }}
+        run: |
+          export jobid=${{ needs.main.outputs.jobid }}
+          export sshcmd="ssh -o StrictHostKeyChecking=no ${{ inputs.resource.ip }}"
+          export jobschedulertype=${{ inputs.jobschedulertype }}
+          source ./010_mpi_hello_world/libs.sh
+          wait_job
+        cleanup: |
+          if [[ "${{ inputs.jobschedulertype }}" == "SLURM" ]]; then
+              cancel_cmd="scancel"
+          elif [[ "${{ inputs.jobschedulertype }}" == "PBS" ]]; then
+              cancel_cmd="qdel"
+          fi
+
+          ssh -o StrictHostKeyChecking=no ${{ inputs.resource.ip }} ${cancel_cmd} ${{ needs.main.outputs.jobid }}
+
+
+
 'on':
   execute:
     inputs:
@@ -72,7 +142,3 @@ jobs:
         ignore: ${{ .hidden }}
         optional: ${{ .hidden }}
         tooltip: If yes is selected, the PW job waits for the SLURM or PBS job to complete while continuously monitoring its status and the possibility to cancel the SLURM or PBS job when the PW job is canceled
-      ssh_cmd:
-        type: string
-        hidden: true
-        default: ssh -o StrictHostKeyChecking=no ${{ inputs.resource.ip }}
