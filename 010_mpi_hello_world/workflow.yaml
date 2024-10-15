@@ -80,13 +80,19 @@ jobs:
           export jobschedulertype=${{ inputs.jobschedulertype }}
           source ./010_mpi_hello_world/libs.sh
           wait_job
+          echo "completed=true" >> $OUTPUTS
         cleanup: |
+          if [[ "${{ needs.main.outputs.completed }}" == "true" ]]; then
+              exit 0
+          fi
+
           if [[ "${{ inputs.jobschedulertype }}" == "SLURM" ]]; then
               cancel_cmd="scancel"
           elif [[ "${{ inputs.jobschedulertype }}" == "PBS" ]]; then
               cancel_cmd="qdel"
           fi
-
+          
+          echo Cancelling Job
           ssh -o StrictHostKeyChecking=no ${{ inputs.resource.ip }} ${cancel_cmd} ${{ needs.main.outputs.jobid }}
 
 
