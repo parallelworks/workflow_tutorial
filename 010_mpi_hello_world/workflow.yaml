@@ -1,0 +1,144 @@
+jobs:
+  main:
+    steps:
+
+      - name: Install Intel-OneAPI-MPI
+        if: ${{ inputs.install_mpi }}
+        run: ssh -o StrictHostKeyChecking=no ${{ inputs.resource.ip }} 'bash -s' < ./010_mpi_hello_world/install_intel_mpi_with_spack.sh
+      
+      - name: Set Load MPI Environment Command
+        run: |
+            if ${{ inputs.install_mpi }}; then
+                echo load_mpi="source ~/pw/software/load-intel-oneapi-mpi.sh" >> $OUTPUTS
+            else
+                echo load_mpi=${{ inputs.load_mpi }} >> $OUTPUTS
+            fi
+      
+      - name: Create Compile Script
+        run: |
+          cat > compile.sh <<HERE
+          #!/bin/bash
+          ${{ needs.main.outputs.load_mpi }}
+          cd ~/${PWD/#$HOME/}
+          mpicc -o mpitest mpitest.c
+          chmod +x mpitest
+          HERE
+          chmod +x compile.sh
+          cat compile.sh
+      
+      - name: Create Run Script
+        run: |
+          cat > run.sh <<HERE
+          ${{ inputs.scheduler_directives }}
+          ${{ needs.main.outputs.load_mpi }}
+          cd ~/${PWD/#$HOME/}
+          mpirun -np ${{ inputs.np }} ./mpitest &> mpitest.out
+          cat mpitest.out
+          HERE
+          chmod +x run.sh
+          cat run.sh
+      
+      - name: Transfer Files from Workspace to Cluster
+        run: |
+          ssh -o StrictHostKeyChecking=no ${{ inputs.resource.ip }} mkdir -p ~/${PWD/#$HOME/}
+          scp run.sh ./010_mpi_hello_world/mpitest.c ${{ inputs.resource.ip }}:~/${PWD/#$HOME/}
+      
+      - name: Compiling App
+        run: ssh -o StrictHostKeyChecking=no ${{ inputs.resource.ip }} 'bash -s' < ./compile.sh
+      
+      - name: Run App in Controller Node
+        if: ${{ inputs.jobschedulertype === CONTROLLER }}
+        run: ssh -o StrictHostKeyChecking=no ${{ inputs.resource.ip }} ~/${PWD/#$HOME/}/run.sh
+      
+      - name: Submit App to SLURM Partition
+        if: ${{ inputs.jobschedulertype === SLURM }}
+        run: |
+          jobid=$(ssh -o StrictHostKeyChecking=no ${{ inputs.resource.ip }} sbatch ~/${PWD/#$HOME/}/run.sh  | tail -1 | awk -F ' ' '{print $4}')
+          # Check if jobid is empty and exit with error if true
+          if [[ -z "${jobid}" ]]; then
+              echo "Error: Job submission failed. jobid is empty." >&2
+              exit 1
+          fi
+          echo jobid=${jobid} >> $OUTPUTS
+
+      - name: Submit App to PBS Queue
+        if: ${{ inputs.jobschedulertype === PBS }}
+        run: |
+          jobid=$(ssh -o StrictHostKeyChecking=no ${{ inputs.resource.ip }} qsub ~/${PWD/#$HOME/}/run.sh)
+          # Check if jobid is empty and exit with error if true
+          if [[ -z "${jobid}" ]]; then
+              echo "Error: Job submission failed. jobid is empty." >&2
+              exit 1
+          fi
+          echo jobid=${jobid} >> $OUTPUTS
+
+      - name: Wait for App to Run
+        if: ${{ inputs.wait_for_job === true && inputs.jobschedulertype !== CONTROLLER }}
+        run: |
+          export jobid=${{ needs.main.outputs.jobid }}
+          export sshcmd="ssh -o StrictHostKeyChecking=no ${{ inputs.resource.ip }}"
+          export jobschedulertype=${{ inputs.jobschedulertype }}
+          source ./010_mpi_hello_world/libs.sh
+          wait_job
+        cleanup: |
+          if [[ "${{ inputs.jobschedulertype }}" == "SLURM" ]]; then
+              cancel_cmd="scancel"
+          elif [[ "${{ inputs.jobschedulertype }}" == "PBS" ]]; then
+              cancel_cmd="qdel"
+          fi
+
+          ssh -o StrictHostKeyChecking=no ${{ inputs.resource.ip }} ${cancel_cmd} ${{ needs.main.outputs.jobid }}
+
+
+
+'on':
+  execute:
+    inputs:
+      install_mpi:
+        label: Install Intel-OneAPI-MPI?
+        type: boolean
+        default: true
+        tooltip: If yes is selected, the job install intel-oneapi-mpi. Otherwise, you must provide a command to load MPI.
+      load_mpi:
+        label: Command to load MPI
+        type: string
+        hidden: ${{ inputs.install_mpi }}
+        ignore: ${{ .hidden }}
+        optional: ${{ .hidden }}
+        tooltip: 'To load the MPI environment, enter the appropriate command, for example: module load module-name or source path/to/env.sh.'
+      np:
+        label: Number of Processes
+        type: number
+        min: 2
+        max: 100
+        default: 2
+        tooltip: Number of MPI processes
+      resource:
+        label: Resource
+        type: compute-clusters
+        tooltip: Choose the resource for script submission
+      jobschedulertype:
+        label: Select Controller, SLURM Partition or PBS Queue
+        type: dropdown
+        options:
+          - label: Controller or Login Node
+            value: CONTROLLER
+          - label: SLURM Partition
+            value: SLURM
+          - label: PBS Queue
+            value: PBS
+        tooltip: Job will submitted using SSH, sbatch or qsub, respectively
+      scheduler_directives:
+        label: Type the scheduler directives
+        type: editor
+        default: '#!/bin/bash'
+        hidden: ${{ inputs.jobschedulertype === CONTROLLER }}
+        optional: ${{.hi}}
+      wait_for_job:
+        label: Wait for the PBS job or fire and forget?
+        type: boolean
+        default: true
+        hidden: ${{ inputs.jobschedulertype === CONTROLLER }}
+        ignore: ${{ .hidden }}
+        optional: ${{ .hidden }}
+        tooltip: If yes is selected, the PW job waits for the SLURM or PBS job to complete while continuously monitoring its status and the possibility to cancel the SLURM or PBS job when the PW job is canceled
