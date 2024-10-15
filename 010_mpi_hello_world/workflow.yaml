@@ -139,7 +139,7 @@ jobs:
         type: editor
         default: '#!/bin/bash'
         hidden: ${{ inputs.jobschedulertype === CONTROLLER }}
-        optional: ${{.hi}}
+        optional: ${{.hidden}}
       wait_for_job:
         label: Wait for the PBS job or fire and forget?
         type: boolean
