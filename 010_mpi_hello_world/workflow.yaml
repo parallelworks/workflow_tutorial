@@ -1,10 +1,11 @@
 jobs:
   main:
     steps:
+
       - name: Install Intel-OneAPI-MPI
         if: ${{ inputs.install_mpi }}
         run: |
-           ${{ inputs.ssh_cmd}} 'bash -s' < ./install_intel_mpi_with_spack.sh
+           ${{ inputs.ssh_cmd}} 'bash -s' < ./010_mpi_hello_world/install_intel_mpi_with_spack.sh
          
 'on':
   execute:
