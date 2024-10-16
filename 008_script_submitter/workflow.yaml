@@ -72,7 +72,7 @@ jobs:
           fi
 
           echo Cancelling Job
-          ssh -o StrictHostKeyChecking=no ${{ inputs.resource.ip }} scancel ${{ needs.main.outputs.jobid }}
+          $sshcmd scancel ${{ needs.main.outputs.jobid }}
       - name: Wait for PBS Job
         env:
           sshcmd: ssh -o StrictHostKeyChecking=no ${{ inputs.resource.ip }}
@@ -108,7 +108,7 @@ jobs:
           fi
 
           echo Cancelling Job
-          ssh -o StrictHostKeyChecking=no ${{ inputs.resource.ip }} qdel ${{ needs.main.outputs.jobid }}
+          $sshcmd qdel ${{ needs.main.outputs.jobid }}
 'on':
   execute:
     inputs:
