@@ -4,6 +4,7 @@ jobs:
       - name: Install Intel-OneAPI-MPI
         if: ${{ inputs.install_mpi }}
         run: ssh -o StrictHostKeyChecking=no ${{ inputs.resource.ip }} 'bash -s' < ./010_mpi_hello_world/install_intel_mpi_with_spack.sh
+      
       - name: Create Compile Script
         run: |
           cat > compile.sh <<HERE
@@ -15,6 +16,7 @@ jobs:
           HERE
           chmod +x compile.sh
           cat compile.sh
+      
       - name: Create Run Script
         run: |
           cat > run.sh <<HERE
@@ -26,15 +28,19 @@ jobs:
           HERE
           chmod +x run.sh
           cat run.sh
+     
       - name: Transfer Files from Workspace to Cluster
         run: |
           ssh -o StrictHostKeyChecking=no ${{ inputs.resource.ip }} mkdir -p ~/${PWD/#$HOME/}
           scp run.sh ./010_mpi_hello_world/mpitest.c ${{ inputs.resource.ip }}:~/${PWD/#$HOME/}
+      
       - name: Compiling App
         run: ssh -o StrictHostKeyChecking=no ${{ inputs.resource.ip }} 'bash -s' < ./compile.sh
+      
       - name: Run App in Controller Node
         if: ${{ inputs.jobschedulertype === CONTROLLER }}
         run: ssh -o StrictHostKeyChecking=no ${{ inputs.resource.ip }} ~/${PWD/#$HOME/}/run.sh
+      
       - name: Submit App to SLURM Partition
         if: ${{ inputs.jobschedulertype === SLURM }}
         run: |
@@ -45,6 +51,7 @@ jobs:
               exit 1
           fi
           echo jobid=${jobid} >> $OUTPUTS
+
       - name: Submit App to PBS Queue
         if: ${{ inputs.jobschedulertype === PBS }}
         run: |
@@ -55,6 +62,7 @@ jobs:
               exit 1
           fi
           echo jobid=${jobid} >> $OUTPUTS
+
       - name: Wait for SLURM Job
         env:
           sshcmd: ssh -o StrictHostKeyChecking=no ${{ inputs.resource.ip }}
@@ -92,7 +100,7 @@ jobs:
           fi
 
           echo Cancelling Job
-          ssh -o StrictHostKeyChecking=no ${{ inputs.resource.ip }} scancel ${{ needs.main.outputs.jobid }}
+          $sshcmd scancel ${{ needs.main.outputs.jobid }}
       - name: Wait for PBS Job
         env:
           sshcmd: ssh -o StrictHostKeyChecking=no ${{ inputs.resource.ip }}
@@ -128,7 +136,8 @@ jobs:
           fi
 
           echo Cancelling Job
-          ssh -o StrictHostKeyChecking=no ${{ inputs.resource.ip }} qdel ${{ needs.main.outputs.jobid }}
+          $sshcmd qdel ${{ needs.main.outputs.jobid }}
+          
 'on':
   execute:
     inputs:
