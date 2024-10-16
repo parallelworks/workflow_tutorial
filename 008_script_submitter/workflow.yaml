@@ -35,14 +35,13 @@ jobs:
               exit 1
           fi
           echo jobid=${jobid} >> $OUTPUTS
-
       - name: Wait for SLURM Job
         env:
           sshcmd: ssh -o StrictHostKeyChecking=no ${{ inputs.resource.ip }}
           jobid: ${{ needs.main.outputs.jobid }}
         if: ${{ inputs.wait_for_job === true && inputs.jobschedulertype === SLURM }}
         run: |
-          
+
           get_slurm_job_status() {
             # Get the header line to determine the column index corresponding to the job status
             if [ -z "${SQUEUE_HEADER}" ]; then
@@ -54,7 +53,7 @@ jobs:
             echo "${status_response}"
             export job_status=$(echo ${status_response} | awk -v id="${jobid}" -v col="$status_column" '{print $col}')
           }
-        
+
           while true; do
             sleep 15
             # squeue won't give you status of jobs that are not running or waiting to run
@@ -74,14 +73,13 @@ jobs:
 
           echo Cancelling Job
           ssh -o StrictHostKeyChecking=no ${{ inputs.resource.ip }} scancel ${{ needs.main.outputs.jobid }}
-
       - name: Wait for PBS Job
         env:
           sshcmd: ssh -o StrictHostKeyChecking=no ${{ inputs.resource.ip }}
           jobid: ${{ needs.main.outputs.jobid }}
         if: ${{ inputs.wait_for_job === true && inputs.jobschedulertype === PBS }}
         run: |
-          
+
           get_pbs_job_status() {
             # Get the header line to determine the column index corresponding to the job status
             if [ -z "${QSTAT_HEADER}" ]; then
@@ -92,7 +90,7 @@ jobs:
             echo "${status_response}"
             export job_status="$(eval $sshcmd qstat -f ${jobid} 2>/dev/null  | grep job_state | cut -d'=' -f2 | tr -d ' ')"
           }
-        
+
           while true; do
             sleep 15
             get_pbs_job_status
@@ -111,7 +109,6 @@ jobs:
 
           echo Cancelling Job
           ssh -o StrictHostKeyChecking=no ${{ inputs.resource.ip }} qdel ${{ needs.main.outputs.jobid }}
-
 'on':
   execute:
     inputs:
