@@ -1,24 +1,15 @@
 jobs:
   main:
     steps:
-
       - name: Install Intel-OneAPI-MPI
         if: ${{ inputs.install_mpi }}
         run: ssh -o StrictHostKeyChecking=no ${{ inputs.resource.ip }} 'bash -s' < ./010_mpi_hello_world/install_intel_mpi_with_spack.sh
-      
-      - name: Set Load MPI Environment Command
-        run: |
-            if ${{ inputs.install_mpi }}; then
-                echo load_mpi="source ~/pw/software/load-intel-oneapi-mpi.sh" >> $OUTPUTS
-            else
-                echo load_mpi=${{ inputs.load_mpi }} >> $OUTPUTS
-            fi
       
       - name: Create Compile Script
         run: |
           cat > compile.sh <<HERE
           #!/bin/bash
-          ${{ needs.main.outputs.load_mpi }}
+          ${{ inputs.load_mpi }}
           cd ~/${PWD/#$HOME/}
           mpicc -o mpitest mpitest.c
           chmod +x mpitest
@@ -30,7 +21,7 @@ jobs:
         run: |
           cat > run.sh <<HERE
           ${{ inputs.scheduler_directives }}
-          ${{ needs.main.outputs.load_mpi }}
+          ${{ inputs.load_mpi }}
           cd ~/${PWD/#$HOME/}
           mpirun -np ${{ inputs.np }} ./mpitest &> mpitest.out
           cat mpitest.out
@@ -60,7 +51,7 @@ jobs:
               exit 1
           fi
           echo jobid=${jobid} >> $OUTPUTS
-
+      
       - name: Submit App to PBS Queue
         if: ${{ inputs.jobschedulertype === PBS }}
         run: |
@@ -71,7 +62,7 @@ jobs:
               exit 1
           fi
           echo jobid=${jobid} >> $OUTPUTS
-
+      
       - name: Wait for App to Run
         if: ${{ inputs.wait_for_job === true && inputs.jobschedulertype !== CONTROLLER }}
         run: |
@@ -91,11 +82,9 @@ jobs:
           elif [[ "${{ inputs.jobschedulertype }}" == "PBS" ]]; then
               cancel_cmd="qdel"
           fi
-          
+
           echo Cancelling Job
           ssh -o StrictHostKeyChecking=no ${{ inputs.resource.ip }} ${cancel_cmd} ${{ needs.main.outputs.jobid }}
-
-
 
 'on':
   execute:
@@ -105,13 +94,16 @@ jobs:
         type: boolean
         default: true
         tooltip: If yes is selected, the job install intel-oneapi-mpi. Otherwise, you must provide a command to load MPI.
+      
+      # Required if install_mpi=false and source ~/pw/software/load-intel-oneapi-mpi.sh if install_mpi=false
       load_mpi:
         label: Command to load MPI
         type: string
         hidden: ${{ inputs.install_mpi }}
-        ignore: ${{ .hidden }}
         optional: ${{ .hidden }}
+        default: ${{ .hidden && "source ~/pw/software/load-intel-oneapi-mpi.sh" || "" }}
         tooltip: 'To load the MPI environment, enter the appropriate command, for example: module load module-name or source path/to/env.sh.'
+      
       np:
         label: Number of Processes
         type: number
@@ -119,10 +111,12 @@ jobs:
         max: 100
         default: 2
         tooltip: Number of MPI processes
+      
       resource:
         label: Resource
         type: compute-clusters
         tooltip: Choose the resource for script submission
+      
       jobschedulertype:
         label: Select Controller, SLURM Partition or PBS Queue
         type: dropdown
@@ -134,12 +128,14 @@ jobs:
           - label: PBS Queue
             value: PBS
         tooltip: Job will submitted using SSH, sbatch or qsub, respectively
+      
       scheduler_directives:
         label: Type the scheduler directives
         type: editor
         default: '#!/bin/bash'
         hidden: ${{ inputs.jobschedulertype === CONTROLLER }}
         optional: ${{.hidden}}
+      
       wait_for_job:
         label: Wait for the PBS job or fire and forget?
         type: boolean
