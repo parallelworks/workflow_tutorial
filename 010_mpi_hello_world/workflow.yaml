@@ -4,7 +4,6 @@ jobs:
       - name: Install Intel-OneAPI-MPI
         if: ${{ inputs.install_mpi }}
         run: ssh -o StrictHostKeyChecking=no ${{ inputs.resource.ip }} 'bash -s' < ./010_mpi_hello_world/install_intel_mpi_with_spack.sh
-      
       - name: Create Compile Script
         run: |
           cat > compile.sh <<HERE
@@ -16,7 +15,6 @@ jobs:
           HERE
           chmod +x compile.sh
           cat compile.sh
-      
       - name: Create Run Script
         run: |
           cat > run.sh <<HERE
@@ -28,19 +26,15 @@ jobs:
           HERE
           chmod +x run.sh
           cat run.sh
-      
       - name: Transfer Files from Workspace to Cluster
         run: |
           ssh -o StrictHostKeyChecking=no ${{ inputs.resource.ip }} mkdir -p ~/${PWD/#$HOME/}
           scp run.sh ./010_mpi_hello_world/mpitest.c ${{ inputs.resource.ip }}:~/${PWD/#$HOME/}
-      
       - name: Compiling App
         run: ssh -o StrictHostKeyChecking=no ${{ inputs.resource.ip }} 'bash -s' < ./compile.sh
-      
       - name: Run App in Controller Node
         if: ${{ inputs.jobschedulertype === CONTROLLER }}
         run: ssh -o StrictHostKeyChecking=no ${{ inputs.resource.ip }} ~/${PWD/#$HOME/}/run.sh
-      
       - name: Submit App to SLURM Partition
         if: ${{ inputs.jobschedulertype === SLURM }}
         run: |
@@ -51,7 +45,6 @@ jobs:
               exit 1
           fi
           echo jobid=${jobid} >> $OUTPUTS
-      
       - name: Submit App to PBS Queue
         if: ${{ inputs.jobschedulertype === PBS }}
         run: |
@@ -62,30 +55,80 @@ jobs:
               exit 1
           fi
           echo jobid=${jobid} >> $OUTPUTS
-      
-      - name: Wait for App to Run
-        if: ${{ inputs.wait_for_job === true && inputs.jobschedulertype !== CONTROLLER }}
+      - name: Wait for SLURM Job
+        env:
+          sshcmd: ssh -o StrictHostKeyChecking=no ${{ inputs.resource.ip }}
+          jobid: ${{ needs.main.outputs.jobid }}
+        if: ${{ inputs.wait_for_job === true && inputs.jobschedulertype === SLURM }}
         run: |
-          export jobid=${{ needs.main.outputs.jobid }}
-          export sshcmd="ssh -o StrictHostKeyChecking=no ${{ inputs.resource.ip }}"
-          export jobschedulertype=${{ inputs.jobschedulertype }}
-          source ./010_mpi_hello_world/libs.sh
-          wait_job
+
+          get_slurm_job_status() {
+            # Get the header line to determine the column index corresponding to the job status
+            if [ -z "${SQUEUE_HEADER}" ]; then
+              export SQUEUE_HEADER="$(eval "$sshcmd squeue" | awk 'NR==1')"
+            fi
+            status_column=$(echo "${SQUEUE_HEADER}" | awk '{ for (i=1; i<=NF; i++) if ($i ~ /^S/) { print i; exit } }')
+            status_response=$(eval $sshcmd squeue | grep "\<${jobid}\>")
+            echo "${SQUEUE_HEADER}"
+            echo "${status_response}"
+            export job_status=$(echo ${status_response} | awk -v id="${jobid}" -v col="$status_column" '{print $col}')
+          }
+
+          while true; do
+            sleep 15
+            # squeue won't give you status of jobs that are not running or waiting to run
+            get_slurm_job_status
+            # If job status is empty job is no longer running
+            if [ -z "${job_status}" ]; then
+              job_status=$($sshcmd sacct -j ${jobid}  --format=state | tail -n1)
+              break
+            fi
+          done
+
           echo "completed=true" >> $OUTPUTS
         cleanup: |
           if [[ "${{ needs.main.outputs.completed }}" == "true" ]]; then
               exit 0
           fi
 
-          if [[ "${{ inputs.jobschedulertype }}" == "SLURM" ]]; then
-              cancel_cmd="scancel"
-          elif [[ "${{ inputs.jobschedulertype }}" == "PBS" ]]; then
-              cancel_cmd="qdel"
+          echo Cancelling Job
+          ssh -o StrictHostKeyChecking=no ${{ inputs.resource.ip }} scancel ${{ needs.main.outputs.jobid }}
+      - name: Wait for PBS Job
+        env:
+          sshcmd: ssh -o StrictHostKeyChecking=no ${{ inputs.resource.ip }}
+          jobid: ${{ needs.main.outputs.jobid }}
+        if: ${{ inputs.wait_for_job === true && inputs.jobschedulertype === PBS }}
+        run: |
+
+          get_pbs_job_status() {
+            # Get the header line to determine the column index corresponding to the job status
+            if [ -z "${QSTAT_HEADER}" ]; then
+              export QSTAT_HEADER="$(eval "$sshcmd qstat" | awk 'NR==1')"
+            fi
+            status_response=$(eval $sshcmd qstat 2>/dev/null | grep "\<${jobid}\>")
+            echo "${QSTAT_HEADER}"
+            echo "${status_response}"
+            export job_status="$(eval $sshcmd qstat -f ${jobid} 2>/dev/null  | grep job_state | cut -d'=' -f2 | tr -d ' ')"
+          }
+
+          while true; do
+            sleep 15
+            get_pbs_job_status
+            if [[ "${job_status}" == "C" ]]; then
+                break
+            elif [ -z "${job_status}" ]; then
+                break
+            fi
+          done
+
+          echo "completed=true" >> $OUTPUTS
+        cleanup: |
+          if [[ "${{ needs.main.outputs.completed }}" == "true" ]]; then
+              exit 0
           fi
 
           echo Cancelling Job
-          ssh -o StrictHostKeyChecking=no ${{ inputs.resource.ip }} ${cancel_cmd} ${{ needs.main.outputs.jobid }}
-
+          ssh -o StrictHostKeyChecking=no ${{ inputs.resource.ip }} qdel ${{ needs.main.outputs.jobid }}
 'on':
   execute:
     inputs:
@@ -94,8 +137,6 @@ jobs:
         type: boolean
         default: true
         tooltip: If yes is selected, the job install intel-oneapi-mpi. Otherwise, you must provide a command to load MPI.
-      
-      # Required if install_mpi=false and source ~/pw/software/load-intel-oneapi-mpi.sh if install_mpi=false
       load_mpi:
         label: Command to load MPI
         type: string
@@ -103,7 +144,6 @@ jobs:
         optional: ${{ .hidden }}
         default: ${{ .hidden && "source ~/pw/software/load-intel-oneapi-mpi.sh" || "" }}
         tooltip: 'To load the MPI environment, enter the appropriate command, for example: module load module-name or source path/to/env.sh.'
-      
       np:
         label: Number of Processes
         type: number
@@ -111,12 +151,10 @@ jobs:
         max: 100
         default: 2
         tooltip: Number of MPI processes
-      
       resource:
         label: Resource
         type: compute-clusters
         tooltip: Choose the resource for script submission
-      
       jobschedulertype:
         label: Select Controller, SLURM Partition or PBS Queue
         type: dropdown
@@ -128,14 +166,12 @@ jobs:
           - label: PBS Queue
             value: PBS
         tooltip: Job will submitted using SSH, sbatch or qsub, respectively
-      
       scheduler_directives:
         label: Type the scheduler directives
         type: editor
         default: '#!/bin/bash'
         hidden: ${{ inputs.jobschedulertype === CONTROLLER }}
         optional: ${{.hidden}}
-      
       wait_for_job:
         label: Wait for the PBS job or fire and forget?
         type: boolean
