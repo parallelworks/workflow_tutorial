@@ -1,0 +1,120 @@
+jobs:
+  main:
+    steps:
+      - name: Write Script
+        if: ${{ inputs.input_method === TEXT }}
+        run: |
+          echo '${{ inputs.script_text }}' > script.sh
+          chmod +x script.sh
+      - name: Transfer Script to Cluster
+        if: ${{  inputs.input_method === TEXT || inputs.input_method === WORKSPACE_PATH }}
+        run: |
+          ssh -o StrictHostKeyChecking=no ${{ inputs.resource.ip }} mkdir -p ~/${PWD/#$HOME/}
+          scp script.sh ${{ inputs.resource.ip }}:~/${PWD/#$HOME/}
+      - name: Run Script in Controller Node
+        if: ${{ inputs.jobschedulertype === CONTROLLER }}
+        run: ssh -o StrictHostKeyChecking=no ${{ inputs.resource.ip }} ~/${PWD/#$HOME/}/script.sh
+      - name: Submit Script to SLURM Partition
+        if: ${{ inputs.jobschedulertype === SLURM }}
+        run: |
+          set -x
+          jobid=$(ssh -o StrictHostKeyChecking=no ${{ inputs.resource.ip }} sbatch ~/${PWD/#$HOME/}/script.sh  | tail -1 | awk -F ' ' '{print $4}')
+          # Check if jobid is empty and exit with error if true
+          if [[ -z "${jobid}" ]]; then
+              echo "Error: Job submission failed. jobid is empty." >&2
+              exit 1
+          fi
+          echo jobid=${jobid} >> $OUTPUTS
+      - name: Submit Script to PBS Queue
+        if: ${{ inputs.jobschedulertype === PBS }}
+        run: |
+          jobid=$(ssh -o StrictHostKeyChecking=no ${{ inputs.resource.ip }} qsub ~/${PWD/#$HOME/}/script.sh)
+          # Check if jobid is empty and exit with error if true
+          if [[ -z "${jobid}" ]]; then
+              echo "Error: Job submission failed. jobid is empty." >&2
+              exit 1
+          fi
+          echo jobid=${jobid} >> $OUTPUTS
+      - name: Wait for Script to Run
+        if: ${{ inputs.wait_for_job === true && inputs.jobschedulertype !== CONTROLLER }}
+        run: |
+          export jobid=${{ needs.main.outputs.jobid }}
+          export sshcmd="ssh -o StrictHostKeyChecking=no ${{ inputs.resource.ip }}"
+          export jobschedulertype=${{ inputs.jobschedulertype }}
+          source ./008_script_submitter/libs.sh
+          wait_job
+          echo "completed=true" >> $OUTPUTS
+        cleanup: |
+          if [[ "${{ needs.main.outputs.completed }}" == "true" ]]; then
+              exit 0
+          fi
+
+          if [[ "${{ inputs.jobschedulertype }}" == "SLURM" ]]; then
+              cancel_cmd="scancel"
+          elif [[ "${{ inputs.jobschedulertype }}" == "PBS" ]]; then
+              cancel_cmd="qdel"
+          fi
+
+          echo Cancelling Job
+          ssh -o StrictHostKeyChecking=no ${{ inputs.resource.ip }} ${cancel_cmd} ${{ needs.main.outputs.jobid }}
+'on':
+  execute:
+    inputs:
+      header:
+        type: header
+        text: Starter Local Workflow
+        size: 20
+      resource:
+        type: compute-clusters
+        label: Resource
+      jobschedulertype:
+        type: dropdown
+        label: Select Controller, SLURM Partition or PBS Queue
+        tooltip: Job will submitted using SSH, sbatch or qsub, respectively
+        options:
+          - label: Controller or Login Node
+            value: CONTROLLER
+          - label: SLURM Partition
+            value: SLURM
+          - label: PBS Queue
+            value: PBS
+        default: CONTROLLER
+      wait_for_job:
+        label: Wait for the PBS job or fire and forget?
+        type: boolean
+        default: true
+        hidden: ${{ inputs.jobschedulertype === CONTROLLER }}
+        ignore: ${{ .hidden }}
+        optional: ${{ .hidden }}
+        tooltip: If yes is selected, the PW job waits for the SLURM or PBS job to complete while continuously monitoring its status and the possibility to cancel the SLURM or PBS job when the PW job is canceled
+      input_method:
+        label: Select Method to Input Script
+        type: dropdown
+        tooltip: This script is submitted to the selected resource
+        default: TEXT
+        options:
+          - label: Type your script
+            value: TEXT
+          - label: Path to the script in the user workspace
+            value: WORKSPACE_PATH
+          - label: Path to the script in the resource
+            value: RESOURCE_PATH
+      script_text:
+        label: Type your script
+        type: string
+        textarea: true
+        default: '#!/bin/bash'
+        tooltip: Type or copy paste the script that is submitted to the selected resource
+        hidden: ${{inputs.input_method != "TEXT"}}
+      workspace_script_path:
+        label: Path to the script in the user workspace
+        tooltip: Use an absolute path if the script is not in the workflow directory
+        type: string
+        default: /path/to/script
+        hidden: ${{inputs.input_method != "WORKSPACE_PATH"}}
+      resource_script_path:
+        label: Path to the script in the resource
+        tooltip: Use an absolute path if the script is not in the workflow directory
+        type: string
+        default: /path/to/script
+        hidden: ${{inputs.input_method != "RESOURCE_PATH"}}
