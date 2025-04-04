@@ -9,6 +9,7 @@ print(f"CUDA available: {torch.cuda.is_available()}")
 print(f"GPU device: {torch.cuda.current_device()}")
 print(f"GPU name: {torch.cuda.get_device_name(0)}")
 
+
 class Net(nn.Module):
     def __init__(self):
         super().__init__()
@@ -24,16 +25,16 @@ class Net(nn.Module):
         x = torch.relu(self.fc1(x))
         return self.fc2(x)
 
-device = torch.device('cuda')
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 model = Net().to(device)
 criterion = nn.CrossEntropyLoss()
-optimizer = optim.SGD(model.parameters(), lr=0.01)
+optimizer = optim.SGD(model.parameters(), lr=__lr__)
 
 transform = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.1307,), (0.3081,))])
 trainset = datasets.MNIST('/data', train=True, download=True, transform=transform)
 trainloader = DataLoader(trainset, batch_size=64, shuffle=True)
 
-for epoch in range(5):
+for epoch in range(__num_epochs__):
     for i, (images, labels) in enumerate(trainloader):
         images, labels = images.to(device), labels.to(device)
         optimizer.zero_grad()
@@ -44,5 +45,5 @@ for epoch in range(5):
         if i % 100 == 0:
             print(f'Epoch {epoch+1}, Batch {i}, Loss: {loss.item():.4f}')
 
-torch.save(model.state_dict(), '/mnt/model/mnist_cnn.pt')
-print('Model saved to /mnt/model/mnist_cnn.pt')
+torch.save(model.state_dict(), '__save_path__')
+print('Model saved to __save_path__')

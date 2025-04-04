@@ -1,5 +1,8 @@
 # Workflow Description
-This workflow automates a machine learning training job on a Kubernetes cluster using kubectl. It trains a CNN on the MNIST dataset with PyTorch and GPU support. Key steps include:
+This workflow automates a machine learning training job on a Kubernetes cluster using kubectl. It trains a CNN on the MNIST dataset with PyTorch and GPU support. If any step fails, the workflow sends a notification..
+
+
+Key steps include:
 
 ### Authentication
 Authenticates kubectl with the specified cluster (default: minikubegpu) using the **pw client**.
@@ -15,12 +18,8 @@ Authenticates kubectl with the specified cluster (default: minikubegpu) using th
 
 ### Training Script:
 - Defines a CNN for MNIST classification.
-- Trains on GPU for 5 epochs.
+- Trains on GPU if available.
 - Saves the model to the PVC.
-
-### Inputs:
-- cluster: Target cluster (default: minikubegpu).
-- pvc_storage: PVC size (default: 1Gi).
 
 
 It provides a scalable, automated solution for GPU-accelerated training in Kubernetes.

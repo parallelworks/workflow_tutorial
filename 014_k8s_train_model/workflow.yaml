@@ -4,7 +4,7 @@ jobs:
   auth:
     steps:
       - name: Authenticate kubectl
-        run: pw kube auth ${{ inputs.cluster }}
+        run: pw kube auth ${{ inputs.k8s.cluster }}
   k8s_deployment:
     needs:
       - auth
@@ -23,6 +23,10 @@ jobs:
         run: |
           set -xe
           trap './notify.sh create-configmap 1' ERR
+          sed -i "s/__num_epochs__/${{ inputs.model.num_epochs }}/g" train-script.py
+          sed -i "s/__lr__/${{ inputs.model.lr }}/g" train-script.py
+          sed -i "s/__batch_size__/${{ inputs.model.batch_size }}/g" train-script.py
+          sed -i "s|__save_path__|${{ inputs.model.save_path }}|g" train-script.py
           kubectl create configmap ${configmap_name} --from-file=train-script.py
         cleanup: kubectl delete configmap ${configmap_name}
       - name: Apply PVC
@@ -42,7 +46,7 @@ jobs:
               - ReadWriteOnce
             resources:
               requests:
-                storage:  ${{ inputs.pvc_storage }}
+                storage:  ${{ inputs.k8s.pvc_storage }}
           HERE
 
           # Apply pvc.yaml configuration
@@ -58,6 +62,7 @@ jobs:
         run: |
           set -xe
           trap './notify.sh apply-train-job 3' ERR
+          model_save_path_dir=$(dirname ${{ inputs.model.save_path }})
           # Create train-job.yaml configuration
           cat > train-job.yaml <<HERE
           apiVersion: batch/v1
@@ -75,7 +80,7 @@ jobs:
                     limits:
                       nvidia.com/gpu: 1
                   volumeMounts:
-                  - mountPath: "/mnt/model"
+                  - mountPath: "${model_save_path_dir}"
                     name: ${pvc_name}
                   - mountPath: "/scripts"
                     name: script-volume
@@ -168,6 +173,7 @@ jobs:
         run: |
           set -xe
           trap './notify.sh apply-transfer-pod 8' ERR
+          model_save_path_dir=$(dirname ${{ inputs.model.save_path }})
           # Create transfer-pod.yaml configuration
           cat > transfer-pod.yaml <<HERE
           apiVersion: v1
@@ -180,7 +186,7 @@ jobs:
               image: pytorch/pytorch:2.0.1-cuda11.7-cudnn8-runtime
               command: ["sleep", "3600"]
               volumeMounts:
-              - mountPath: "/mnt/model"
+              - mountPath: "${model_save_path_dir}"
                 name: ${pvc_name}
             volumes:
             - name: ${pvc_name}
@@ -202,6 +208,7 @@ jobs:
         run: |
           set -xe
           trap './notify.sh transfer-ml-model 9' ERR
+          model_save_path_basename=$(basename ${{ inputs.model.save_path }})
           # Wait for the transfer pod to be running
           echo "Waiting for transfer pod to start..."
           if ! kubectl wait --for=condition=Ready pod/${transfer_pod_name} --timeout=300s; then
@@ -210,7 +217,7 @@ jobs:
           fi
 
           # Copy the model file from the PVC to the local machine
-          if ! kubectl cp ${transfer_pod_name}:/mnt/model/mnist_cnn.pt ./mnist_cnn.pt; then
+          if ! kubectl cp ${transfer_pod_name}:${{ inputs.model.save_path }} ./${model_save_path_basename}; then
             echo "Error: Failed to copy model file."
             exit 1
           fi
@@ -220,11 +227,45 @@ jobs:
 'on':
   execute:
     inputs:
-      cluster:
-        label: Kubernetes cluster
-        type: string
-        default: minikubegpu2
-      pvc_storage:
-        label: PVC Storage
-        type: string
-        default: 1Gi
+      k8s:
+        type: group
+        label: Kubernetes
+        items:
+          cluster:
+            label: Kubernetes cluster
+            type: string
+            default: minikubegpu2
+          pvc_storage:
+            label: PVC Storage
+            type: string
+            default: 1Gi
+      model:
+        type: group
+        label: ML Model
+        items:
+          num_epochs:
+            label: Number of Epochs
+            type: number
+            default: 5
+            min: 1
+            max: 500
+          lr:
+            label: Learning Rate
+            type:  number
+            default: 0.01
+            min: 0
+            max: 1
+          batch_size:
+            label: Batch Size
+            type:  number
+            default: 64
+            min: 8
+            max: 128
+          save_path:
+            label: Save path
+            type: string
+            default: /mnt/model/mnist_cnn.pt
+            tooltip: Path to save the trained model parameters
+
+          
+
