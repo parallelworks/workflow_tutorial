@@ -27,8 +27,8 @@ jobs:
           sed -i "s/__lr__/${{ inputs.model.lr }}/g" train-script.py
           sed -i "s/__batch_size__/${{ inputs.model.batch_size }}/g" train-script.py
           sed -i "s|__save_path__|${{ inputs.model.save_path }}|g" train-script.py
-          kubectl create configmap ${configmap_name} --from-file=train-script.py
-        cleanup: kubectl delete configmap ${configmap_name}
+          kubectl create configmap ${configmap_name} --from-file=train-script.py -n ${{ inputs.k8s.namespace }}
+        cleanup: kubectl delete configmap ${configmap_name} -n ${{ inputs.k8s.namespace }}
       - name: Apply PVC
         env:
           pvc_name: model-storage-${{ needs.k8s_deployment.outputs.job_id }}
@@ -50,8 +50,8 @@ jobs:
           HERE
 
           # Apply pvc.yaml configuration
-          kubectl apply -f pvc.yaml
-        cleanup: kubectl delete -f pvc.yaml
+          kubectl apply -f pvc.yaml -n ${{ inputs.k8s.namespace }}
+        cleanup: kubectl delete -f pvc.yaml -n ${{ inputs.k8s.namespace }}
       - name: Apply training job
         env:
           train_job_name: mnist-train-${{ needs.k8s_deployment.outputs.job_id }}
@@ -94,9 +94,8 @@ jobs:
           HERE
 
           # Apply train-job.yaml configuration
-          kubectl apply -f train-job.yaml 
-        cleanup: kubectl delete -f train-job.yaml
-
+          kubectl apply -f train-job.yaml -n ${{ inputs.k8s.namespace }}
+        cleanup: kubectl delete -f train-job.yaml -n ${{ inputs.k8s.namespace }}
       - name: Wait for pod to start
         env:
           train_job_name: mnist-train-${{ needs.k8s_deployment.outputs.job_id }}
@@ -105,7 +104,7 @@ jobs:
           echo "Waiting for pod to start..."
           max_retries=100
           retries=0
-          until kubectl get pod -l job-name=${train_job_name} -o jsonpath="{.items[0].status.phase}" >/dev/null 2>&1 && [ "$(kubectl get pod -l job-name=${train_job_name} -o jsonpath='{.items[0].status.phase}')" != "Pending" ] || [ "$(kubectl get pod -l job-name=${train_job_name} -o jsonpath='{.items[0].status.phase}')" = "Running" ]; do
+          until kubectl get pod -n ${{ inputs.k8s.namespace }} -l job-name=${train_job_name} -o jsonpath="{.items[0].status.phase}" >/dev/null 2>&1 && [ "$(kubectl get pod -l job-name=${train_job_name} -o jsonpath='{.items[0].status.phase}')" != "Pending" ] || [ "$(kubectl get pod -l job-name=${train_job_name} -o jsonpath='{.items[0].status.phase}')" = "Running" ]; do
             echo "Pod is not yet started. Waiting..."
 
             retries=$((retries + 1))
@@ -117,15 +116,14 @@ jobs:
             fi
             sleep 6
           done
-
       - name: Wait for job to finish
         env:
           train_job_name: mnist-train-${{ needs.k8s_deployment.outputs.job_id }}
         run: |
           echo "Waiting for job ${train_job_name} to finish..."
-          if ! kubectl wait --for=condition=Complete job/${train_job_name} --timeout=600s; then
+          if ! kubectl wait -n ${{ inputs.k8s.namespace }} --for=condition=Complete job/${train_job_name} --timeout=600s; then
               echo "Job ${train_job_name} failed or did not complete in time. Checking failure status..."
-              if kubectl wait --for=condition=Failed job/${train_job_name} --timeout=10s; then
+              if kubectl wait -n ${{ inputs.k8s.namespace }} --for=condition=Failed job/${train_job_name} --timeout=10s; then
                   echo "Job ${train_job_name} has failed."
               else
                   echo "Job ${train_job_name} neither completed nor explicitly failed within the timeout."
@@ -137,7 +135,7 @@ jobs:
           train_job_name: mnist-train-${{ needs.k8s_deployment.outputs.job_id }}
         run: |
           # Get the pod name associated with the job
-          pod_name=$(kubectl get pod -l job-name=${train_job_name} -o jsonpath="{.items[0].metadata.name}")
+          pod_name=$(kubectl get pod -n ${{ inputs.k8s.namespace }} -l job-name=${train_job_name} -o jsonpath="{.items[0].metadata.name}")
 
           # Check if pod_name is empty (i.e., no pod found)
           if [ -z "$pod_name" ]; then
@@ -150,15 +148,15 @@ jobs:
           echo "Pod name: ${pod_name}"
 
           # Print the logs of the pod
-          kubectl logs ${pod_name}
+          kubectl logs ${pod_name} -n ${{ inputs.k8s.namespace }}
         cleanup: |
           # Get the pod name associated with the job
-          pod_name=$(kubectl get pod -l job-name=${train_job_name} -o jsonpath="{.items[0].metadata.name}")
+          pod_name=$(kubectl get pod -n ${{ inputs.k8s.namespace }} -l job-name=${train_job_name} -o jsonpath="{.items[0].metadata.name}")
 
           # Delete the pod if it exists
           if [ -n "$pod_name" ]; then
             echo "Cleaning up pod: ${pod_name}"
-            kubectl delete pod ${pod_name} --force --grace-period=0
+            kubectl delete pod ${pod_name} --force --grace-period=0 -n ${{ inputs.k8s.namespace }}
           else
             echo "No pod found to cleanup for job ${train_job_name}"
           fi
@@ -192,9 +190,8 @@ jobs:
           HERE
 
           # Apply the transfer pod configuration
-          kubectl apply -f transfer-pod.yaml
-        cleanup: kubectl delete pod ${transfer_pod_name} --force --grace-period=0
-          
+          kubectl apply -f transfer-pod.yaml -n ${{ inputs.k8s.namespace }}
+        cleanup: kubectl delete pod ${transfer_pod_name} --force --grace-period=0 -n ${{ inputs.k8s.namespace }}
       - name: Transfer ML model
         env:
           transfer_pod_name: mnist-transfer-${{ needs.k8s_deployment.outputs.job_id }}
@@ -205,19 +202,18 @@ jobs:
           model_save_path_basename=$(basename ${{ inputs.model.save_path }})
           # Wait for the transfer pod to be running
           echo "Waiting for transfer pod to start..."
-          if ! kubectl wait --for=condition=Ready pod/${transfer_pod_name} --timeout=300s; then
+          if ! kubectl wait -n ${{ inputs.k8s.namespace }} --for=condition=Ready pod/${transfer_pod_name} --timeout=300s; then
             echo "Error: Transfer pod did not start in time."
             exit 1
           fi
 
           # Copy the model file from the PVC to the local machine
-          if ! kubectl cp ${transfer_pod_name}:${{ inputs.model.save_path }} ./${model_save_path_basename}; then
+          if ! kubectl cp ${transfer_pod_name}:${{ inputs.model.save_path }} ./${model_save_path_basename} -n ${{ inputs.k8s.namespace }}; then
             echo "Error: Failed to copy model file."
             exit 1
           fi
 
           echo "Model file transfer completed successfully."
-
 'on':
   execute:
     inputs:
@@ -229,6 +225,10 @@ jobs:
             label: Kubernetes cluster
             type: string
             default: minikubegpu2
+          namespace:
+            label: Namespace
+            type: string
+            default: alvaro-k8s-testing
           pvc_storage:
             label: PVC Storage
             type: string
@@ -245,13 +245,13 @@ jobs:
             max: 500
           lr:
             label: Learning Rate
-            type:  number
+            type: number
             default: 0.01
             min: 0
             max: 1
           batch_size:
             label: Batch Size
-            type:  number
+            type: number
             default: 64
             min: 8
             max: 128
@@ -260,6 +260,3 @@ jobs:
             type: string
             default: /mnt/model/mnist_cnn.pt
             tooltip: Path to save the trained model parameters
-
-          
-
