@@ -1,0 +1,230 @@
+permissions:
+  - '*'
+jobs:
+  auth:
+    steps:
+      - name: Authenticate kubectl
+        run: pw kube auth ${{ inputs.cluster }}
+  k8s_deployment:
+    needs:
+      - auth
+    steps:
+      - name: Defining job id
+        run: |
+          job_number=$(pwd | rev | cut -d "/" -f1 | rev)
+          echo "export job_number=${job_number}" > job.info
+          workflow_name=$(pwd | rev | cut -d "/" -f2 | rev)
+          echo "export workflow_name=${workflow_name}" >> job.info
+          job_id="${PW_USER}-${workflow_name}-${job_number}-$(date +%s)"
+          echo "job_id=${job_id}" | tee -a $OUTPUTS
+      - name: Add training script to config map
+        env:
+          configmap_name: train-script-${{ needs.k8s_deployment.outputs.job_id }}
+        run: |
+          set -xe
+          trap './notify.sh create-configmap 1' ERR
+          kubectl create configmap ${configmap_name} --from-file=train-script.py
+        cleanup: kubectl delete configmap ${configmap_name}
+      - name: Apply PVC
+        env:
+          pvc_name: model-storage-${{ needs.k8s_deployment.outputs.job_id }}
+        run: |
+          set -xe
+          trap './notify.sh apply-pvc 2' ERR
+          # Create pvc.yaml configuration
+          cat > pvc.yaml <<HERE
+          apiVersion: v1
+          kind: PersistentVolumeClaim
+          metadata:
+            name: ${pvc_name}
+          spec:
+            accessModes:
+              - ReadWriteOnce
+            resources:
+              requests:
+                storage:  ${{ inputs.pvc_storage }}
+          HERE
+
+          # Apply pvc.yaml configuration
+          touch pvc.applying
+          kubectl apply -f pvc.yaml
+          touch pvc.applied
+        cleanup: kubectl delete -f pvc.yaml
+      - name: Apply training job
+        env:
+          train_job_name: mnist-train-${{ needs.k8s_deployment.outputs.job_id }}
+          pvc_name: model-storage-${{ needs.k8s_deployment.outputs.job_id }}
+          configmap_name: train-script-${{ needs.k8s_deployment.outputs.job_id }}
+        run: |
+          set -xe
+          trap './notify.sh apply-train-job 3' ERR
+          # Create train-job.yaml configuration
+          cat > train-job.yaml <<HERE
+          apiVersion: batch/v1
+          kind: Job
+          metadata:
+            name: ${train_job_name}
+          spec:
+            template:
+              spec:
+                containers:
+                - name: trainer
+                  image: pytorch/pytorch:2.0.1-cuda11.7-cudnn8-runtime
+                  command: ["python", "/scripts/train-script.py"]
+                  resources:
+                    limits:
+                      nvidia.com/gpu: 1
+                  volumeMounts:
+                  - mountPath: "/mnt/model"
+                    name: ${pvc_name}
+                  - mountPath: "/scripts"
+                    name: script-volume
+                volumes:
+                - name:  ${pvc_name}
+                  persistentVolumeClaim:
+                    claimName:  ${pvc_name}
+                - name: script-volume
+                  configMap:
+                    name: ${configmap_name}
+                restartPolicy: Never
+            backoffLimit: 2
+          HERE
+
+          # Apply train-job.yaml configuration
+          touch train-job.applying
+          kubectl apply -f train-job.yaml 
+          touch train-job.applied
+        cleanup: kubectl delete -f train-job.yaml
+
+      - name: Wait for pod to start
+        env:
+          train_job_name: mnist-train-${{ needs.k8s_deployment.outputs.job_id }}
+        run: |
+          # Wait for the pod to start (i.e., exist and not be in ContainerCreating state)
+          echo "Waiting for pod to start..."
+          max_retries=100
+          retries=0
+          until kubectl get pod -l job-name=${train_job_name} -o jsonpath="{.items[0].status.phase}" >/dev/null 2>&1 && [ "$(kubectl get pod -l job-name=${train_job_name} -o jsonpath='{.items[0].status.phase}')" != "Pending" ] || [ "$(kubectl get pod -l job-name=${train_job_name} -o jsonpath='{.items[0].status.phase}')" = "Running" ]; do
+            echo "Pod is not yet started. Waiting..."
+
+            retries=$((retries + 1))
+            
+            if [[ $retries -ge $max_retries ]]; then
+              echo "Maximum retries ($max_retries) reached! Pod did not start."
+              ./notify.sh wait-for-pod 4
+              exit 1
+            fi
+            sleep 6
+          done
+
+      - name: Wait for job to finish
+        env:
+          train_job_name: mnist-train-${{ needs.k8s_deployment.outputs.job_id }}
+        run: |
+          echo "Waiting for job ${train_job_name} to finish..."
+          if ! kubectl wait --for=condition=Complete job/${train_job_name} --timeout=600s; then
+              echo "Job ${train_job_name} failed or did not complete in time. Checking failure status..."
+              if kubectl wait --for=condition=Failed job/${train_job_name} --timeout=10s; then
+                  echo "Job ${train_job_name} has failed."
+              else
+                  echo "Job ${train_job_name} neither completed nor explicitly failed within the timeout."
+              fi
+              ./notify.sh wait-for-job 5
+          fi
+      - name: Print logs
+        env:
+          train_job_name: mnist-train-${{ needs.k8s_deployment.outputs.job_id }}
+        run: |
+          # Get the pod name associated with the job
+          pod_name=$(kubectl get pod -l job-name=${train_job_name} -o jsonpath="{.items[0].metadata.name}")
+
+          # Check if pod_name is empty (i.e., no pod found)
+          if [ -z "$pod_name" ]; then
+            echo "Error: No pod found for job ${train_job_name}"
+            ./notify.sh print-logs 6
+            exit 1
+          fi
+
+          # Print the pod name
+          echo "Pod name: ${pod_name}"
+
+          # Print the logs of the pod
+          kubectl logs ${pod_name}
+        cleanup: |
+          # Get the pod name associated with the job
+          pod_name=$(kubectl get pod -l job-name=${train_job_name} -o jsonpath="{.items[0].metadata.name}")
+
+          # Delete the pod if it exists
+          if [ -n "$pod_name" ]; then
+            echo "Cleaning up pod: ${pod_name}"
+            kubectl delete pod ${pod_name} --force --grace-period=0
+          else
+            echo "No pod found to cleanup for job ${train_job_name}"
+          fi
+      - name: Create transfer pod
+        env:
+          transfer_pod_name: mnist-transfer-${{ needs.k8s_deployment.outputs.job_id }}
+          pvc_name: model-storage-${{ needs.k8s_deployment.outputs.job_id }}
+        run: |
+          set -xe
+          trap './notify.sh apply-transfer-pod 8' ERR
+          # Create transfer-pod.yaml configuration
+          cat > transfer-pod.yaml <<HERE
+          apiVersion: v1
+          kind: Pod
+          metadata:
+            name: ${transfer_pod_name}
+          spec:
+            containers:
+            - name: transfer
+              image: pytorch/pytorch:2.0.1-cuda11.7-cudnn8-runtime
+              command: ["sleep", "3600"]
+              volumeMounts:
+              - mountPath: "/mnt/model"
+                name: ${pvc_name}
+            volumes:
+            - name: ${pvc_name}
+              persistentVolumeClaim:
+                claimName: ${pvc_name}
+            restartPolicy: Never
+          HERE
+
+          # Apply the transfer pod configuration
+          touch transfer-pod.applying
+          kubectl apply -f transfer-pod.yaml
+          touch transfer-pod.applied
+        cleanup: kubectl delete pod ${transfer_pod_name} --force --grace-period=0
+          
+      - name: Transfer ML model
+        env:
+          transfer_pod_name: mnist-transfer-${{ needs.k8s_deployment.outputs.job_id }}
+          pvc_name: model-storage-${{ needs.k8s_deployment.outputs.job_id }}
+        run: |
+          set -xe
+          trap './notify.sh transfer-ml-model 9' ERR
+          # Wait for the transfer pod to be running
+          echo "Waiting for transfer pod to start..."
+          if ! kubectl wait --for=condition=Ready pod/${transfer_pod_name} --timeout=300s; then
+            echo "Error: Transfer pod did not start in time."
+            exit 1
+          fi
+
+          # Copy the model file from the PVC to the local machine
+          if ! kubectl cp ${transfer_pod_name}:/mnt/model/mnist_cnn.pt ./mnist_cnn.pt; then
+            echo "Error: Failed to copy model file."
+            exit 1
+          fi
+
+          echo "Model file transfer completed successfully."
+
+'on':
+  execute:
+    inputs:
+      cluster:
+        label: Kubernetes cluster
+        type: string
+        default: minikubegpu2
+      pvc_storage:
+        label: PVC Storage
+        type: string
+        default: 1Gi
