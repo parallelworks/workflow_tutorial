@@ -50,9 +50,7 @@ jobs:
           HERE
 
           # Apply pvc.yaml configuration
-          touch pvc.applying
           kubectl apply -f pvc.yaml
-          touch pvc.applied
         cleanup: kubectl delete -f pvc.yaml
       - name: Apply training job
         env:
@@ -96,9 +94,7 @@ jobs:
           HERE
 
           # Apply train-job.yaml configuration
-          touch train-job.applying
           kubectl apply -f train-job.yaml 
-          touch train-job.applied
         cleanup: kubectl delete -f train-job.yaml
 
       - name: Wait for pod to start
@@ -196,9 +192,7 @@ jobs:
           HERE
 
           # Apply the transfer pod configuration
-          touch transfer-pod.applying
           kubectl apply -f transfer-pod.yaml
-          touch transfer-pod.applied
         cleanup: kubectl delete pod ${transfer_pod_name} --force --grace-period=0
           
       - name: Transfer ML model
