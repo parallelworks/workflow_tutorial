@@ -75,8 +75,11 @@ jobs:
                   image: pytorch/pytorch:2.0.1-cuda11.7-cudnn8-runtime
                   command: ["python", "/scripts/train-script.py"]
                   resources:
+                    requests:
+                      cpu: "${{ inputs.k8s.cpu_request }}"          # Request 1 CPU core
+                      memory: "${{ inputs.k8s.memory_request }}"     # Request 2 GiB of memory
                     limits:
-                      nvidia.com/gpu: 1
+                      nvidia.com/gpu: ${{ inputs.k8s.gpu_limit }}
                   volumeMounts:
                   - mountPath: "${model_save_path_dir}"
                     name: ${pvc_name}
@@ -100,36 +103,118 @@ jobs:
         env:
           train_job_name: mnist-train-${{ needs.k8s_deployment.outputs.job_id }}
         run: |
-          # Wait for the pod to start (i.e., exist and not be in ContainerCreating state)
-          echo "Waiting for pod to start..."
-          max_retries=100
+
+          # Configuration
+          NAMESPACE="${{ inputs.k8s.namespace }}"
+          TRAIN_JOB_NAME="${train_job_name}"
+          MAX_RETRIES=100
+          SLEEP_INTERVAL=6
+
+          # Function to get pod phase (returns empty string if no pod exists)
+          get_pod_phase() {
+            kubectl get pod -n "$NAMESPACE" -l job-name="$TRAIN_JOB_NAME" -o jsonpath="{.items[0].status.phase}" 2>/dev/null || echo ""
+          }
+
+          # Function to describe pod for debugging
+          describe_pod() {
+            local pod_name
+            pod_name=$(kubectl get pod -n "$NAMESPACE" -l job-name="$TRAIN_JOB_NAME" -o jsonpath="{.items[0].metadata.name}" 2>/dev/null)
+            if [ -n "$pod_name" ]; then
+              echo "Pod details:"
+              kubectl describe pod "$pod_name" -n "$NAMESPACE"
+            else
+              echo "No pod found for job $TRAIN_JOB_NAME in namespace $NAMESPACE."
+            fi
+          }
+
+          echo "Waiting for pod to start for job $TRAIN_JOB_NAME in namespace $NAMESPACE..."
           retries=0
-          until kubectl get pod -n ${{ inputs.k8s.namespace }} -l job-name=${train_job_name} -o jsonpath="{.items[0].status.phase}" >/dev/null 2>&1 && [ "$(kubectl get pod -l job-name=${train_job_name} -o jsonpath='{.items[0].status.phase}')" != "Pending" ] || [ "$(kubectl get pod -l job-name=${train_job_name} -o jsonpath='{.items[0].status.phase}')" = "Running" ]; do
-            echo "Pod is not yet started. Waiting..."
+
+          while [ $retries -lt $MAX_RETRIES ]; do
+            phase=$(get_pod_phase)
+
+            # Case 1: No pod exists yet
+            if [ -z "$phase" ]; then
+              echo "No pod found yet. Waiting... ($retries/$MAX_RETRIES)"
+            
+            # Case 2: Pod is in Pending (e.g., scheduling or pulling image)
+            elif [ "$phase" = "Pending" ]; then
+              echo "Pod is in Pending state. Waiting... ($retries/$MAX_RETRIES)"
+            
+            # Case 3: Pod is Running (success case)
+            elif [ "$phase" = "Running" ]; then
+              echo "Pod is Running! Proceeding..."
+              exit 0
+            
+            # Case 4: Pod has succeeded (job completed)
+            elif [ "$phase" = "Succeeded" ]; then
+              echo "Pod has already Succeeded. Job completed."
+              exit 0
+            
+            # Case 5: Pod has failed
+            elif [ "$phase" = "Failed" ]; then
+              echo "Error: Pod has Failed."
+              describe_pod
+              ./notify.sh wait-for-pod 4
+              exit 1
+            
+            # Case 6: Unexpected phase
+            else
+              echo "Unexpected pod phase: $phase. Waiting... ($retries/$MAX_RETRIES)"
+            fi
 
             retries=$((retries + 1))
-            
-            if [[ $retries -ge $max_retries ]]; then
-              echo "Maximum retries ($max_retries) reached! Pod did not start."
+            if [ $retries -ge $MAX_RETRIES ]; then
+              echo "Error: Maximum retries ($MAX_RETRIES) reached! Pod did not start."
+              describe_pod
+              echo "Job details for further debugging:"
+              kubectl describe job "$TRAIN_JOB_NAME" -n "$NAMESPACE"
               ./notify.sh wait-for-pod 4
               exit 1
             fi
-            sleep 6
+
+            sleep "$SLEEP_INTERVAL"
           done
       - name: Wait for job to finish
         env:
           train_job_name: mnist-train-${{ needs.k8s_deployment.outputs.job_id }}
         run: |
+          # Stream logs in background
+          kubectl logs -n ${{ inputs.k8s.namespace }} -f job/${train_job_name} &
+          LOGS_PID=$!
+          # Set trap to kill logs process on exit
+          trap 'kill $LOGS_PID 2>/dev/null' EXIT
+
           echo "Waiting for job ${train_job_name} to finish..."
-          if ! kubectl wait -n ${{ inputs.k8s.namespace }} --for=condition=Complete job/${train_job_name} --timeout=600s; then
-              echo "Job ${train_job_name} failed or did not complete in time. Checking failure status..."
-              if kubectl wait -n ${{ inputs.k8s.namespace }} --for=condition=Failed job/${train_job_name} --timeout=10s; then
+
+          # Initialize counter (600s / 5s per iteration = 120 iterations)
+          COUNTER=0
+          MAX_ITERATIONS=120
+          SLEEP_DURATION=5
+
+          # While loop to check job status
+          while [ $COUNTER -lt $MAX_ITERATIONS ]; do
+              # Check if job is Complete
+              if kubectl -n ${{ inputs.k8s.namespace }} get job/${train_job_name} -o jsonpath="{.status.conditions[?(@.type==\"Complete\")].status}" 2>/dev/null | grep -q "True"; then
+                  echo "Job ${train_job_name} completed successfully."
+                  exit 0
+              # Check if job is Failed
+              elif kubectl -n ${{ inputs.k8s.namespace }} get job/${train_job_name} -o jsonpath="{.status.conditions[?(@.type==\"Failed\")].status}" 2>/dev/null | grep -q "True"; then
                   echo "Job ${train_job_name} has failed."
-              else
-                  echo "Job ${train_job_name} neither completed nor explicitly failed within the timeout."
+                  ./notify.sh wait-for-job 5
+                  exit 1
               fi
-              ./notify.sh wait-for-job 5
-          fi
+
+              # Increment counter and sleep
+              COUNTER=$((COUNTER + 1))
+              echo "Waiting... ($((COUNTER * SLEEP_DURATION))s elapsed)"
+              sleep $SLEEP_DURATION
+          done
+
+          # If loop exits, timeout occurred
+          echo "Job ${train_job_name} neither completed nor explicitly failed within 10 minutes."
+          ./notify.sh wait-for-job 5
+          exit 1
       - name: Print logs
         env:
           train_job_name: mnist-train-${{ needs.k8s_deployment.outputs.job_id }}
@@ -179,6 +264,10 @@ jobs:
             - name: transfer
               image: pytorch/pytorch:2.0.1-cuda11.7-cudnn8-runtime
               command: ["sleep", "3600"]
+              resources:
+                requests:
+                  memory: "100Mi"
+                  cpu: "500m"
               volumeMounts:
               - mountPath: "${model_save_path_dir}"
                 name: ${pvc_name}
@@ -229,6 +318,20 @@ jobs:
             label: Namespace
             type: string
             default: alvaro-k8s-testing
+          gpu_limit:
+            label: GPU Limit
+            type: number
+            default: 1
+            min: 0
+            max: 2
+          cpu_request:
+            label: CPU Request
+            type: number
+            default: 1
+          memory_request:
+            label: Memory Request
+            type: string
+            default: 2Gi
           pvc_storage:
             label: PVC Storage
             type: string
