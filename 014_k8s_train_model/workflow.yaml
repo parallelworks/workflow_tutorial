@@ -102,149 +102,57 @@ jobs:
       - name: Wait for pod to start
         env:
           train_job_name: mnist-train-${{ needs.k8s_deployment.outputs.job_id }}
+          namespace: ${{ inputs.k8s.namespace }}
         run: |
+          source k8s_libs.sh
+          trap './notify.sh wait-for-pod 4' ERR
 
-          # Configuration
-          NAMESPACE="${{ inputs.k8s.namespace }}"
-          TRAIN_JOB_NAME="${train_job_name}"
-          MAX_RETRIES=100
-          SLEEP_INTERVAL=6
-
-          # Function to get pod phase (returns empty string if no pod exists)
-          get_pod_phase() {
-            kubectl get pod -n "$NAMESPACE" -l job-name="$TRAIN_JOB_NAME" -o jsonpath="{.items[0].status.phase}" 2>/dev/null || echo ""
-          }
-
-          # Function to describe pod for debugging
-          describe_pod() {
-            local pod_name
-            pod_name=$(kubectl get pod -n "$NAMESPACE" -l job-name="$TRAIN_JOB_NAME" -o jsonpath="{.items[0].metadata.name}" 2>/dev/null)
-            if [ -n "$pod_name" ]; then
-              echo "Pod details:"
-              kubectl describe pod "$pod_name" -n "$NAMESPACE"
+          pod_name=$(get_pod_name_from_job_name "${namespace}" "${train_job_name}")
+          echo "pod_name=${pod_name}" | tee -a $OUTPUTS
+          if [ $? -eq 0 ]; then
+            phase=$(wait_for_pod "${namespace}" "${pod_name}")
+            if [ $? -eq 0 ]; then
+              echo "Pod ${pod_name} state is ${phase}"
             else
-              echo "No pod found for job $TRAIN_JOB_NAME in namespace $NAMESPACE."
-            fi
-          }
-
-          echo "Waiting for pod to start for job $TRAIN_JOB_NAME in namespace $NAMESPACE..."
-          retries=0
-
-          while [ $retries -lt $MAX_RETRIES ]; do
-            phase=$(get_pod_phase)
-
-            # Case 1: No pod exists yet
-            if [ -z "$phase" ]; then
-              echo "No pod found yet. Waiting... ($retries/$MAX_RETRIES)"
-            
-            # Case 2: Pod is in Pending (e.g., scheduling or pulling image)
-            elif [ "$phase" = "Pending" ]; then
-              echo "Pod is in Pending state. Waiting... ($retries/$MAX_RETRIES)"
-            
-            # Case 3: Pod is Running (success case)
-            elif [ "$phase" = "Running" ]; then
-              echo "Pod is Running! Proceeding..."
-              exit 0
-            
-            # Case 4: Pod has succeeded (job completed)
-            elif [ "$phase" = "Succeeded" ]; then
-              echo "Pod has already Succeeded. Job completed."
-              exit 0
-            
-            # Case 5: Pod has failed
-            elif [ "$phase" = "Failed" ]; then
-              echo "Error: Pod has Failed."
-              describe_pod
-              ./notify.sh wait-for-pod 4
-              exit 1
-            
-            # Case 6: Unexpected phase
-            else
-              echo "Unexpected pod phase: $phase. Waiting... ($retries/$MAX_RETRIES)"
-            fi
-
-            retries=$((retries + 1))
-            if [ $retries -ge $MAX_RETRIES ]; then
-              echo "Error: Maximum retries ($MAX_RETRIES) reached! Pod did not start."
-              describe_pod
-              echo "Job details for further debugging:"
-              kubectl describe job "$TRAIN_JOB_NAME" -n "$NAMESPACE"
-              ./notify.sh wait-for-pod 4
+              echo "Pod ${pod_name} failed to reach Running state" >&2
               exit 1
             fi
-
-            sleep "$SLEEP_INTERVAL"
-          done
+          else
+            echo "Failed to get pod name" >&2
+            exit 1
+          fi
       - name: Wait for job to finish
         env:
           train_job_name: mnist-train-${{ needs.k8s_deployment.outputs.job_id }}
+          namespace: ${{ inputs.k8s.namespace }}
         run: |
+          source k8s_libs.sh
+
           # Stream logs in background
-          kubectl logs -n ${{ inputs.k8s.namespace }} -f job/${train_job_name} &
+          kubectl logs -n ${namespace} -f job/${train_job_name} &
           LOGS_PID=$!
           # Set trap to kill logs process on exit
           trap 'kill $LOGS_PID 2>/dev/null' EXIT
 
           echo "Waiting for job ${train_job_name} to finish..."
 
-          # Initialize counter (600s / 5s per iteration = 120 iterations)
-          COUNTER=0
-          MAX_ITERATIONS=120
-          SLEEP_DURATION=5
-
-          # While loop to check job status
-          while [ $COUNTER -lt $MAX_ITERATIONS ]; do
-              # Check if job is Complete
-              if kubectl -n ${{ inputs.k8s.namespace }} get job/${train_job_name} -o jsonpath="{.status.conditions[?(@.type==\"Complete\")].status}" 2>/dev/null | grep -q "True"; then
-                  echo "Job ${train_job_name} completed successfully."
-                  exit 0
-              # Check if job is Failed
-              elif kubectl -n ${{ inputs.k8s.namespace }} get job/${train_job_name} -o jsonpath="{.status.conditions[?(@.type==\"Failed\")].status}" 2>/dev/null | grep -q "True"; then
-                  echo "Job ${train_job_name} has failed."
-                  ./notify.sh wait-for-job 5
-                  exit 1
-              fi
-
-              # Increment counter and sleep
-              COUNTER=$((COUNTER + 1))
-              echo "Waiting... ($((COUNTER * SLEEP_DURATION))s elapsed)"
-              sleep $SLEEP_DURATION
-          done
-
-          # If loop exits, timeout occurred
-          echo "Job ${train_job_name} neither completed nor explicitly failed within 10 minutes."
-          ./notify.sh wait-for-job 5
-          exit 1
+          status=$(wait_for_job_completion ${namespace} ${train_job_name})
+          exit_code=$?
+          if [ $exit_code -eq 0 ]; then
+            echo "Job finished successfully with status: $status"
+          else
+            echo "Job did not succeed with status: $status"
+            ./notify.sh wait-for-job 5
+            exit 1
+          fi
       - name: Print logs
         env:
           train_job_name: mnist-train-${{ needs.k8s_deployment.outputs.job_id }}
+          pod_name: ${{ needs.k8s_deployment.outputs.pod_name }}
         run: |
-          # Get the pod name associated with the job
-          pod_name=$(kubectl get pod -n ${{ inputs.k8s.namespace }} -l job-name=${train_job_name} -o jsonpath="{.items[0].metadata.name}")
-
-          # Check if pod_name is empty (i.e., no pod found)
-          if [ -z "$pod_name" ]; then
-            echo "Error: No pod found for job ${train_job_name}"
-            ./notify.sh print-logs 6
-            exit 1
-          fi
-
-          # Print the pod name
-          echo "Pod name: ${pod_name}"
-
           # Print the logs of the pod
           kubectl logs ${pod_name} -n ${{ inputs.k8s.namespace }}
-        cleanup: |
-          # Get the pod name associated with the job
-          pod_name=$(kubectl get pod -n ${{ inputs.k8s.namespace }} -l job-name=${train_job_name} -o jsonpath="{.items[0].metadata.name}")
-
-          # Delete the pod if it exists
-          if [ -n "$pod_name" ]; then
-            echo "Cleaning up pod: ${pod_name}"
-            kubectl delete pod ${pod_name} --force --grace-period=0 -n ${{ inputs.k8s.namespace }}
-          else
-            echo "No pod found to cleanup for job ${train_job_name}"
-          fi
+        cleanup: kubectl delete pod ${pod_name} --force --grace-period=0 -n ${{ inputs.k8s.namespace }}
       - name: Create transfer pod
         env:
           transfer_pod_name: mnist-transfer-${{ needs.k8s_deployment.outputs.job_id }}
@@ -285,24 +193,28 @@ jobs:
         env:
           transfer_pod_name: mnist-transfer-${{ needs.k8s_deployment.outputs.job_id }}
           pvc_name: model-storage-${{ needs.k8s_deployment.outputs.job_id }}
+          namespace: ${{ inputs.k8s.namespace }}
         run: |
+          source k8s_libs.sh
           set -xe
           trap './notify.sh transfer-ml-model 9' ERR
           model_save_path_basename=$(basename ${{ inputs.model.save_path }})
           # Wait for the transfer pod to be running
-          echo "Waiting for transfer pod to start..."
-          if ! kubectl wait -n ${{ inputs.k8s.namespace }} --for=condition=Ready pod/${transfer_pod_name} --timeout=300s; then
-            echo "Error: Transfer pod did not start in time."
+          phase=$(wait_for_pod "${namespace}" "${transfer_pod_name}")
+          if [ $? -eq 0 ]; then
+            echo "Pod ${transfer_pod_name} state is ${phase}"
+          else
+            echo "Pod ${transfer_pod_name} failed to reach Running state" >&2
             exit 1
           fi
-
+          
           # Copy the model file from the PVC to the local machine
           if ! kubectl cp ${transfer_pod_name}:${{ inputs.model.save_path }} ./${model_save_path_basename} -n ${{ inputs.k8s.namespace }}; then
             echo "Error: Failed to copy model file."
             exit 1
           fi
-
           echo "Model file transfer completed successfully."
+          
 'on':
   execute:
     inputs:
