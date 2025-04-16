@@ -224,12 +224,11 @@ jobs:
         items:
           cluster:
             label: Kubernetes cluster
-            type: string
-            default: minikubegpu2
+            type: kubernetes-clusters
           namespace:
             label: Namespace
-            type: string
-            default: alvaro-k8s-testing
+            type: kubernetes-namespaces
+            clusterName: ${{ inputs.k8s.cluster }}
           gpu_limit:
             label: GPU Limit
             type: number
