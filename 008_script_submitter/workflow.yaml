@@ -9,16 +9,16 @@ jobs:
       - name: Transfer Script to Cluster
         if: ${{  inputs.input_method === TEXT || inputs.input_method === WORKSPACE_PATH }}
         run: |
-          ssh -o StrictHostKeyChecking=no ${{ inputs.resource.ip }} mkdir -p ~/${PWD/#$HOME/}
-          scp script.sh ${{ inputs.resource.ip }}:~/${PWD/#$HOME/}
+          ssh -o StrictHostKeyChecking=no ${{ inputs.resource.ip }} mkdir -p ~/pw/jobs/script_submitter/tmp
+          scp script.sh ${{ inputs.resource.ip }}:~/pw/jobs/script_submitter/tmp
       - name: Run Script in Controller Node
         if: ${{ inputs.jobschedulertype === CONTROLLER }}
-        run: ssh -o StrictHostKeyChecking=no ${{ inputs.resource.ip }} ~/${PWD/#$HOME/}/script.sh
+        run: ssh -o StrictHostKeyChecking=no ${{ inputs.resource.ip }} ~/pw/jobs/script_submitter/tmp/script.sh
       - name: Submit Script to SLURM Partition
         if: ${{ inputs.jobschedulertype === SLURM }}
         run: |
           set -x
-          jobid=$(ssh -o StrictHostKeyChecking=no ${{ inputs.resource.ip }} sbatch ~/${PWD/#$HOME/}/script.sh  | tail -1 | awk -F ' ' '{print $4}')
+          jobid=$(ssh -o StrictHostKeyChecking=no ${{ inputs.resource.ip }} sbatch ~/pw/jobs/script_submitter/tmp/script.sh  | tail -1 | awk -F ' ' '{print $4}')
           # Check if jobid is empty and exit with error if true
           if [[ -z "${jobid}" ]]; then
               echo "Error: Job submission failed. jobid is empty." >&2
@@ -28,7 +28,7 @@ jobs:
       - name: Submit Script to PBS Queue
         if: ${{ inputs.jobschedulertype === PBS }}
         run: |
-          jobid=$(ssh -o StrictHostKeyChecking=no ${{ inputs.resource.ip }} qsub ~/${PWD/#$HOME/}/script.sh)
+          jobid=$(ssh -o StrictHostKeyChecking=no ${{ inputs.resource.ip }} qsub ~/pw/script_submitter/tmp/script.sh)
           # Check if jobid is empty and exit with error if true
           if [[ -z "${jobid}" ]]; then
               echo "Error: Job submission failed. jobid is empty." >&2
