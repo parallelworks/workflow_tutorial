@@ -6,6 +6,13 @@ jobs:
         run: |
           echo '${{ inputs.script_text }}' > script.sh
           chmod +x script.sh
+      - name: Test workflow launch context
+        run: |
+          echo What does tilde do?
+          echo Local test
+          echo ~
+          echo Remote test
+          ssh -o StrictHostKeyChecking=no ${{ inputs.resource.ip }} echo ~
       - name: Transfer Script to Cluster
         if: ${{  inputs.input_method === TEXT || inputs.input_method === WORKSPACE_PATH }}
         run: |
