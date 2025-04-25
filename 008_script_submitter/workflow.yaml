@@ -8,11 +8,15 @@ jobs:
           chmod +x script.sh
       - name: Test workflow launch context
         run: |
-          echo What does tilde do?
+          echo "==========What does tilde do?=========="
           echo Local test
           echo ~
           echo Remote test
           ssh -o StrictHostKeyChecking=no ${{ inputs.resource.ip }} echo ~
+          echo "==========What is my local env?========"
+          env
+          echo "==========What is my remote env?======="
+          ssh -o StrictHostKeyChecking=no ${{ inputs.resource.ip }} env
       - name: Transfer Script to Cluster
         if: ${{  inputs.input_method === TEXT || inputs.input_method === WORKSPACE_PATH }}
         run: |
