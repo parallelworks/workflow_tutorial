@@ -25,16 +25,20 @@ jobs:
       - name: Transfer Script to Cluster
         if: ${{  inputs.input_method === TEXT || inputs.input_method === WORKSPACE_PATH }}
         run: |
-          ssh -o StrictHostKeyChecking=no ${{ inputs.resource.ip }} mkdir -p ~/pw/jobs/script_submitter/tmp
-          scp script.sh ${{ inputs.resource.ip }}:~/pw/jobs/script_submitter/tmp
+          source inputs.sh
+          ssh -o StrictHostKeyChecking=no ${{ inputs.resource.ip }} mkdir -p /home/${resource_username}/pw/jobs/script_submitter/tmp
+          scp script.sh ${{ inputs.resource.ip }}:/home/${resource_username}/pw/jobs/script_submitter/tmp
       - name: Run Script in Controller Node
         if: ${{ inputs.jobschedulertype === CONTROLLER }}
-        run: ssh -o StrictHostKeyChecking=no ${{ inputs.resource.ip }} ~/pw/jobs/script_submitter/tmp/script.sh
+        run: |
+          source inputs.sh
+          ssh -o StrictHostKeyChecking=no ${{ inputs.resource.ip }} /home/${resource_username}/pw/jobs/script_submitter/tmp/script.sh
       - name: Submit Script to SLURM Partition
         if: ${{ inputs.jobschedulertype === SLURM }}
         run: |
           set -x
-          jobid=$(ssh -o StrictHostKeyChecking=no ${{ inputs.resource.ip }} sbatch ~/pw/jobs/script_submitter/tmp/script.sh  | tail -1 | awk -F ' ' '{print $4}')
+          source inputs.sh
+          jobid=$(ssh -o StrictHostKeyChecking=no ${{ inputs.resource.ip }} sbatch /home/${resource_username}/pw/jobs/script_submitter/tmp/script.sh  | tail -1 | awk -F ' ' '{print $4}')
           # Check if jobid is empty and exit with error if true
           if [[ -z "${jobid}" ]]; then
               echo "Error: Job submission failed. jobid is empty." >&2
@@ -44,7 +48,8 @@ jobs:
       - name: Submit Script to PBS Queue
         if: ${{ inputs.jobschedulertype === PBS }}
         run: |
-          jobid=$(ssh -o StrictHostKeyChecking=no ${{ inputs.resource.ip }} qsub ~/pw/script_submitter/tmp/script.sh)
+          source inputs.sh
+          jobid=$(ssh -o StrictHostKeyChecking=no ${{ inputs.resource.ip }} qsub /home/${resource_username}/pw/script_submitter/tmp/script.sh)
           # Check if jobid is empty and exit with error if true
           if [[ -z "${jobid}" ]]; then
               echo "Error: Job submission failed. jobid is empty." >&2
