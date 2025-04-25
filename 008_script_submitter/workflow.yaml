@@ -19,6 +19,9 @@ jobs:
           ssh -o StrictHostKeyChecking=no ${{ inputs.resource.ip }} env
           echo "==========What happens if I access my resource?======="
           echo ${{ inputs.resource }}
+          echo "==========Can I access inputs.sh?==========="
+          source inputs.sh
+          env | grep resource
       - name: Transfer Script to Cluster
         if: ${{  inputs.input_method === TEXT || inputs.input_method === WORKSPACE_PATH }}
         run: |
