@@ -13,10 +13,12 @@ jobs:
           echo ~
           echo Remote test
           ssh -o StrictHostKeyChecking=no ${{ inputs.resource.ip }} echo ~
-          echo "==========What happens if I access my resource?======="
+          echo "==========What resource info is provided by ACTIVATE?======="
           echo ${{ inputs.resource }}
-          echo "==========Can I access inputs.sh?==========="
+          echo "==========What additional info is available in inputs.sh?==========="
+          cat inputs.sh
           source inputs.sh
+          echo Printing just resource information...
           env | grep resource
           echo Printing resource_username...
           echo $resource_username
@@ -24,8 +26,11 @@ jobs:
         if: ${{  inputs.input_method === TEXT || inputs.input_method === WORKSPACE_PATH }}
         run: |
           source inputs.sh
+          echo Making working directory on remote resource...
           ssh -o StrictHostKeyChecking=no ${{ inputs.resource.ip }} mkdir -p /home/${resource_username}/pw/jobs/script_submitter/tmp
+          echo Copying script to working directory...
           scp script.sh ${{ inputs.resource.ip }}:/home/${resource_username}/pw/jobs/script_submitter/tmp
+          echo Done, ready to move to the next step.
       - name: Run Script in Controller Node
         if: ${{ inputs.jobschedulertype === CONTROLLER }}
         run: |
