@@ -18,7 +18,16 @@ jobs:
         if: ${{  inputs.input_method === TEXT || inputs.input_method === WORKSPACE_PATH }}
         run: |
           source inputs.sh
-          workdir=/home/${resource_username}/pw/jobs/script_submitter/tmp
+          echo Set workdir to cluster home matching user workspace launch directory
+          echo User workspace launch directory is ${PWD}
+          # Use bash search and replace with anchor
+          echo Stripping local home prefix from launch directory is ${PWD/#$HOME/}
+          resource_home=$(ssh -o StrictHostKeyChecking=no ${{ inputs.resource.ip }} 'echo $HOME')
+          echo Resource home is $resource_home
+          # Not true on all clusters!
+          #echo Resource home is /home/${resource_username}
+          workdir=${resource_home}${PWD/#$HOME/}
+          echo Final workdir on remote is ${workdir}
           echo Making working directory on remote resource...
           ssh -o StrictHostKeyChecking=no ${{ inputs.resource.ip }} mkdir -p -v ${workdir}
           echo Copying script to working directory...
