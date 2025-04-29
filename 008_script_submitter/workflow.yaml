@@ -13,15 +13,13 @@ jobs:
           echo ~
           echo Remote test
           ssh -o StrictHostKeyChecking=no ${{ inputs.resource.ip }} echo ~
-          echo "==========What is my local env?========"
-          env
-          echo "==========What is my remote env?======="
-          ssh -o StrictHostKeyChecking=no ${{ inputs.resource.ip }} env
           echo "==========What happens if I access my resource?======="
           echo ${{ inputs.resource }}
           echo "==========Can I access inputs.sh?==========="
           source inputs.sh
           env | grep resource
+          echo Printing resource_username...
+          echo $resource_username
       - name: Transfer Script to Cluster
         if: ${{  inputs.input_method === TEXT || inputs.input_method === WORKSPACE_PATH }}
         run: |
