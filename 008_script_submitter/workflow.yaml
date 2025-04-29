@@ -13,6 +13,8 @@ jobs:
           echo ~
           echo Remote test
           ssh -o StrictHostKeyChecking=no ${{ inputs.resource.ip }} echo ~
+          echo "==========Where is the workflow being launched from?========"
+          pwd
           echo "==========What resource info is provided by ACTIVATE?======="
           echo ${{ inputs.resource }}
           echo "==========What additional info is available in inputs.sh?==========="
