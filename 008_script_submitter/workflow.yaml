@@ -8,22 +8,12 @@ jobs:
           chmod +x script.sh
       - name: Test workflow launch context
         run: |
-          echo "==========What does tilde do?=========="
-          echo Local test
-          echo ~
-          echo Remote test
-          ssh -o StrictHostKeyChecking=no ${{ inputs.resource.ip }} echo ~
           echo "==========Where is the workflow being launched from?========"
           pwd
           echo "==========What resource info is provided by ACTIVATE?======="
           echo ${{ inputs.resource }}
           echo "==========What additional info is available in inputs.sh?==========="
           cat inputs.sh
-          source inputs.sh
-          echo Printing just resource information...
-          env | grep resource
-          echo Printing resource_username...
-          echo $resource_username
       - name: Transfer Script to Cluster
         if: ${{  inputs.input_method === TEXT || inputs.input_method === WORKSPACE_PATH }}
         run: |
