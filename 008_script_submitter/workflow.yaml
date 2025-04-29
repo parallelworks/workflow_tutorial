@@ -26,22 +26,27 @@ jobs:
         if: ${{  inputs.input_method === TEXT || inputs.input_method === WORKSPACE_PATH }}
         run: |
           source inputs.sh
+          workdir=/home/${resource_username}/pw/jobs/script_submitter/tmp
           echo Making working directory on remote resource...
-          ssh -o StrictHostKeyChecking=no ${{ inputs.resource.ip }} mkdir -p /home/${resource_username}/pw/jobs/script_submitter/tmp
+          ssh -o StrictHostKeyChecking=no ${{ inputs.resource.ip }} mkdir -p -v ${workdir}
           echo Copying script to working directory...
-          scp script.sh ${{ inputs.resource.ip }}:/home/${resource_username}/pw/jobs/script_submitter/tmp
+          scp -v script.sh ${{ inputs.resource.ip }}:${workdir}/script.sh
+          echo Ensure script is executable...
+          ssh -o StrictHostKeyChecking=no ${{ inputs.resource.ip }} chmod u+x -v ${workdir}/script.sh
           echo Done, ready to move to the next step.
       - name: Run Script in Controller Node
         if: ${{ inputs.jobschedulertype === CONTROLLER }}
         run: |
           source inputs.sh
-          ssh -o StrictHostKeyChecking=no ${{ inputs.resource.ip }} /home/${resource_username}/pw/jobs/script_submitter/tmp/script.sh
+          workdir=/home/${resource_username}/pw/jobs/script_submitter/tmp
+          ssh -o StrictHostKeyChecking=no ${{ inputs.resource.ip }} ${workdir}/script.sh
       - name: Submit Script to SLURM Partition
         if: ${{ inputs.jobschedulertype === SLURM }}
         run: |
           set -x
           source inputs.sh
-          jobid=$(ssh -o StrictHostKeyChecking=no ${{ inputs.resource.ip }} sbatch /home/${resource_username}/pw/jobs/script_submitter/tmp/script.sh  | tail -1 | awk -F ' ' '{print $4}')
+          workdir=/home/${resource_username}/pw/jobs/script_submitter/tmp
+          jobid=$(ssh -o StrictHostKeyChecking=no ${{ inputs.resource.ip }} sbatch ${workdir}/script.sh  | tail -1 | awk -F ' ' '{print $4}')
           # Check if jobid is empty and exit with error if true
           if [[ -z "${jobid}" ]]; then
               echo "Error: Job submission failed. jobid is empty." >&2
@@ -52,7 +57,8 @@ jobs:
         if: ${{ inputs.jobschedulertype === PBS }}
         run: |
           source inputs.sh
-          jobid=$(ssh -o StrictHostKeyChecking=no ${{ inputs.resource.ip }} qsub /home/${resource_username}/pw/script_submitter/tmp/script.sh)
+          workdir=/home/${resource_username}/pw/jobs/script_submitter/tmp
+          jobid=$(ssh -o StrictHostKeyChecking=no ${{ inputs.resource.ip }} qsub ${workdir}/script.sh)
           # Check if jobid is empty and exit with error if true
           if [[ -z "${jobid}" ]]; then
               echo "Error: Job submission failed. jobid is empty." >&2
