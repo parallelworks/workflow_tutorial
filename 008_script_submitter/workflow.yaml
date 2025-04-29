@@ -20,12 +20,10 @@ jobs:
           source inputs.sh
           echo Set workdir to cluster home matching user workspace launch directory
           echo User workspace launch directory is ${PWD}
-          # Use bash search and replace with anchor
-          echo Stripping local home prefix from launch directory is ${PWD/#$HOME/}
+          echo Use bash search and replace with anchor to
+          echo remove local home prefix from launch directory with result ${PWD/#$HOME/}
           resource_home=$(ssh -o StrictHostKeyChecking=no ${{ inputs.resource.ip }} 'echo $HOME')
           echo Resource home is $resource_home
-          # Not true on all clusters!
-          #echo Resource home is /home/${resource_username}
           workdir=${resource_home}${PWD/#$HOME/}
           echo Final workdir on remote is ${workdir}
           echo Making working directory on remote resource...
