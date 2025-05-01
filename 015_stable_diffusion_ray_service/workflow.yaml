@@ -1,0 +1,173 @@
+permissions:
+  - '*'
+sessions:
+  dashboard:
+    redirect: true
+  service:
+    redirect: false
+jobs:
+  auth:
+    steps:
+      - name: Authenticate kubectl
+        if: ${{inputs.deploy_ray_service == true }}
+        run: pw kube auth ${{ inputs.k8s.cluster }}
+  main:
+    needs:
+      - auth
+    steps:
+      - name: Install Helm
+        if: ${{inputs.deploy_ray_service == true }}
+        run: |
+          set -ex
+          if ! which helm >/dev/null 2>&1; then
+              echo "Helm is not installed. Downloading..."
+              curl -LO https://get.helm.sh/helm-v3.14.2-linux-amd64.tar.gz
+              tar -zxvf helm-v3.14.2-linux-amd64.tar.gz
+              echo "helm_cmd=./linux-amd64/helm" | tee -a $OUTPUTS
+          else
+              echo "Helm is already installed."
+              echo "helm_cmd=$(which helm)" | tee -a $OUTPUTS
+          fi
+        cleanup: rm -r linux-amd64
+      - name: Install KubeRay Operator
+        if: ${{inputs.deploy_ray_service == true }}
+        env:
+          helm_cmd: ${{ needs.main.outputs.helm_cmd }}
+        run: |
+          set -ex
+          # Check if the repo is already added
+          if ! ${helm_cmd} repo list | grep -q '^kuberay'; then
+            echo "Adding kuberay Helm repo..."
+            ${helm_cmd} repo add kuberay https://ray-project.github.io/kuberay-helm/
+          else
+            echo "Helm repo 'kuberay' already exists, skipping..."
+          fi
+
+          # Always update repos (can skip if you want more optimization)
+          ${helm_cmd} repo update
+
+          # Check if the release is already installed
+          if ! ${helm_cmd} list -n ${{ inputs.k8s.namespace }} | grep -q '^kuberay-operator'; then
+            echo "Installing kuberay-operator..."
+            ${helm_cmd} install kuberay-operator kuberay/kuberay-operator \
+              --version ${{ inputs.k8s.kuberay_version }} \
+              -n ${{ inputs.k8s.namespace }}
+
+            # Wait for the kuberay-operator deployment to be ready
+            echo "Waiting for kuberay-operator to be ready..."
+            kubectl wait --for=condition=Available --timeout=300s \
+            deployment/kuberay-operator -n ${{ inputs.k8s.namespace }}
+          else
+            echo "Helm release 'kuberay-operator' already installed in namespace '${{ inputs.k8s.namespace }}', skipping..."
+          fi        
+        cleanup: ${helm_cmd} uninstall kuberay-operator -n ${{ inputs.k8s.namespace }}
+      - name: Install the RayService
+        if: ${{inputs.deploy_ray_service == true }}
+        run: |
+          set -ex
+          kubectl apply -f ray-service.stable-diffusion.yaml -n ${{ inputs.k8s.namespace }}
+        cleanup: kubectl delete -f ray-service.stable-diffusion.yaml -n ${{ inputs.k8s.namespace }}
+      - name: Wait for service
+        if: ${{inputs.deploy_ray_service == true }}
+        run: |
+          set -ex
+          log() {
+            while true; do
+              echo; echo
+              kubectl describe rayservices.ray.io stable-diffusion -n ${{ inputs.k8s.namespace }}
+              sleep 60
+            done
+          }
+          log &
+          log_pid=$!
+          trap "kill ${log_pid}" EXIT
+          kubectl wait --for=condition=Ready rayservices.ray.io/stable-diffusion --timeout=30m -n ${{ inputs.k8s.namespace }}
+      - name: Get Head Pod Name
+        if: ${{inputs.deploy_ray_service == true }}
+        run: |
+          set -ex
+          head_pod_name=$(kubectl get pods -n ${{ inputs.k8s.namespace }} -l ray.io/node-type=head -o jsonpath="{.items[0].metadata.name}")
+          echo "head_pod_name=${head_pod_name}" | tee -a $OUTPUTS
+      - name: Create session for dashboard
+        uses: parallelworks/update-session
+        with:
+          remotePort: '8265'
+          name: ${{ sessions.dashboard }}
+          targetInfo:
+            name: ${{ inputs.k8s.cluster }}
+            namespace: ${{ inputs.k8s.namespace }}
+            resourceType: pods
+            resourceName: ${{ needs.main.outputs.head_pod_name }}
+      - name: Select service port
+        if: ${{inputs.deploy_ray_service == true }}
+        run: |
+          # Select available port
+          service_port=$(pw agent open-port)
+          echo "service_port=${service_port}" | tee -a $OUTPUTS
+      - name: Create Session for Service
+        uses: parallelworks/update-session
+        with:
+          remotePort: '8000'
+          localPort: ${{ needs.main.outputs.service_port }}
+          name: ${{ sessions.service }}
+          targetInfo:
+            name: ${{ inputs.k8s.cluster }}
+            namespace: ${{ inputs.k8s.namespace }}
+            resourceType: services
+            resourceName: stable-diffusion-serve-svc
+      - name: Send request
+        run: |
+          set -ex
+          # Wait for service session to start
+          sleep 30
+          if [[ "${{ inputs.deploy_ray_service }}" = "true" ]]; then
+            service_port="${{ inputs.service_port }}"
+            service_port="${{ needs.main.outputs.service_port }}"
+          else
+            service_port="${{ inputs.service_port }}"
+          fi
+          /pw/.miniconda3/bin/python3 stable_diffusion_req.py ${service_port} 
+      - name: Wait for cancel
+        if: ${{inputs.deploy_ray_service == true }}
+        run: sleep inf
+'on':
+  execute:
+    inputs:
+      deploy_ray_service:
+        type: boolean
+        default: true
+        tooltip: Select Yes to deploy the service and No to enter a port for an existing service
+      service_port:
+        label: Service Port
+        type: number
+        hidden: ${{inputs.deploy_ray_service == true }}
+        ignore: ${{ .hidden }}
+      k8s:
+        type: group
+        label: Kubernetes
+        hidden: ${{inputs.deploy_ray_service == false }}
+        items:
+          cluster:
+            label: Kubernetes cluster
+            type: kubernetes-clusters
+            hidden: ${{inputs.deploy_ray_service == false }}
+            ignore: ${{ .hidden }}
+          namespace:
+            label: Namespace
+            type: kubernetes-namespaces
+            clusterName: ${{ inputs.k8s.cluster }}
+            hidden: ${{inputs.deploy_ray_service == false }}
+            ignore: ${{ .hidden }}
+          kuberay_version:
+            label: KubeRay Operator Version
+            type: string
+            default: 1.3.0
+            hidden: ${{inputs.deploy_ray_service == false }}
+            ignore: ${{ .hidden }}
+      prompts:
+        type: list
+        label: Prompt
+        template:
+          label: Prompt
+          type: editor
+          default: Futuristic hybrid computing control center with holographic dashboards displaying real-time AI training and simulations.
