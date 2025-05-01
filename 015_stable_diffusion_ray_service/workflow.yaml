@@ -65,8 +65,8 @@ jobs:
         if: ${{inputs.deploy_ray_service == true }}
         run: |
           set -ex
-          kubectl apply -f ray-service.stable-diffusion.yaml -n ${{ inputs.k8s.namespace }}
-        cleanup: kubectl delete -f ray-service.stable-diffusion.yaml -n ${{ inputs.k8s.namespace }}
+          kubectl apply -f 015_stable_diffusion_ray_service/ray-service.stable-diffusion.yaml -n ${{ inputs.k8s.namespace }}
+        cleanup: kubectl delete -f 015_stable_diffusion_ray_service/ray-service.stable-diffusion.yaml -n ${{ inputs.k8s.namespace }}
       - name: Wait for service
         if: ${{inputs.deploy_ray_service == true }}
         run: |
