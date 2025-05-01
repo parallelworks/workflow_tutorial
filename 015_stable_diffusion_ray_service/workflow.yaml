@@ -126,7 +126,7 @@ jobs:
           else
             service_port="${{ inputs.service_port }}"
           fi
-          /pw/.miniconda3/bin/python3 stable_diffusion_req.py ${service_port} 
+          /pw/.miniconda3/bin/python3 015_stable_diffusion_ray_service/stable_diffusion_req.py ${service_port} 
       - name: Wait for cancel
         if: ${{inputs.deploy_ray_service == true }}
         run: sleep inf
