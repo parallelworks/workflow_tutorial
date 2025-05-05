@@ -1,0 +1,174 @@
+permissions:
+  - '*'
+sessions:
+  dashboard:
+    redirect: true
+
+
+jobs:
+  auth:
+    steps:
+      - name: Authenticate kubectl
+        if: ${{inputs.deploy_ray_cluster == true }}
+        run: pw kube auth ${{ inputs.k8s.cluster }}
+  main:
+    needs:
+      - auth
+    steps:
+      - name: Install Helm
+        if: ${{inputs.deploy_ray_cluster == true }}
+        run: |
+          set -ex
+          if ! which helm >/dev/null 2>&1; then
+              echo "Helm is not installed. Downloading..."
+              curl -LO https://get.helm.sh/helm-v3.14.2-linux-amd64.tar.gz
+              tar -zxvf helm-v3.14.2-linux-amd64.tar.gz
+              echo "helm_cmd=./linux-amd64/helm" | tee -a $OUTPUTS
+          else
+              echo "Helm is already installed."
+              echo "helm_cmd=$(which helm)" | tee -a $OUTPUTS
+          fi
+        cleanup: rm -r linux-amd64
+      - name: Install KubeRay Operator
+        if: ${{inputs.deploy_ray_cluster == true }}
+        env:
+          helm_cmd: ${{ needs.main.outputs.helm_cmd }}
+        run: |
+          set -ex
+          # Check if the repo is already added
+          if ! ${helm_cmd} repo list | grep -q '^kuberay'; then
+            echo "Adding kuberay Helm repo..."
+            ${helm_cmd} repo add kuberay https://ray-project.github.io/kuberay-helm/
+          else
+            echo "Helm repo 'kuberay' already exists, skipping..."
+          fi
+
+          # Always update repos
+          ${helm_cmd} repo update
+
+          # Check if the release is already installed
+          if ! ${helm_cmd} list -n ${{ inputs.k8s.namespace }} | grep -q '^kuberay-operator'; then
+            echo "Installing kuberay-operator..."
+            ${helm_cmd} install kuberay-operator kuberay/kuberay-operator \
+              --version ${{ inputs.k8s.kuberay_version }} \
+              -n ${{ inputs.k8s.namespace }}
+
+            # Wait for the kuberay-operator deployment to be ready
+            echo "Waiting for kuberay-operator to be ready..."
+            kubectl wait --for=condition=Available --timeout=300s deployment/kuberay-operator -n ${{ inputs.k8s.namespace }}
+          else
+            echo "Helm release 'kuberay-operator' already installed in namespace '${{ inputs.k8s.namespace }}', skipping..."
+          fi        
+        cleanup: ${helm_cmd} uninstall kuberay-operator -n ${{ inputs.k8s.namespace }}
+      - name: Create Ray Cluster
+        if: ${{inputs.deploy_ray_cluster == true }}
+        run: |
+          set -ex
+          wget  https://raw.githubusercontent.com/ray-project/ray/master/doc/source/cluster/kubernetes/configs/ray-cluster.gpu.yaml
+          if ! [ -f ray-cluster.gpu.yaml ]; then
+            echo "ERROR: ray-cluster.gpu.yaml file not found."
+          fi
+          cluster_name=$(cat ray-cluster.gpu.yaml | grep name | head -n1 | awk '{ print $2 }')
+          if [ -z "${cluster_name}" ]; then
+            echo "ERROR: Unable to obtain Ray cluster's name."
+            exit 1
+          fi
+          echo "cluster_name=$(cluster_name)" | tee -a $OUTPUTS
+          kubectl apply -f ray-cluster.gpu.yaml -n ${{ inputs.k8s.namespace }}
+        cleanup: |
+          kubectl delete -f ray-cluster.gpu.yaml -n ${{ inputs.k8s.namespace }}
+          kubectl delete raycluster raycluster -n ${{ inputs.k8s.namespace }}
+      - name: Wait for head pod
+        env:
+          cluster_name: ${{ needs.main.outputs.cluster_name }}
+        if: ${{inputs.deploy_ray_cluster == true }}
+        run: |
+          set -ex
+          log() {
+            while true; do
+              echo; echo
+              kubectl describe raycluster "${cluster_name}" -n ${{ inputs.k8s.namespace }}
+              sleep 60
+            done
+          }
+          log &
+          log_pid=$!
+          trap "kill ${log_pid}" EXIT
+          kubectl wait pod \
+            -n "${{ inputs.k8s.namespace }}" \
+            -l "rayCluster=${cluster_name},ray-node-type=head" \
+            --for=condition=Ready \
+            --timeout=10m
+      - name: Create session for dashboard
+        if: ${{inputs.deploy_ray_cluster == true }}
+        uses: parallelworks/update-session
+        with:
+          remotePort: '8265'
+          name: ${{ sessions.dashboard }}
+          targetInfo:
+            name: ${{ inputs.k8s.cluster }}
+            namespace: ${{ inputs.k8s.namespace }}
+            resourceType: services
+            resourceName: "${{ needs.main.outputs.head_pod_name }}-head-svc"
+      - name: Test cluster
+        run: ray job submit --address http://localhost:8265 -- python -c "import ray; ray.init(); print(ray.cluster_resources())"
+      - name: Install ray
+        run: |
+          source /pw/.miniconda3/bin/activate
+          pip3 install -U "ray[default]"
+      - name: Run PyTorch ResNet Example
+        run: |
+          set -ex
+          # Download the Python script
+          curl https://raw.githubusercontent.com/ray-project/ray/master/doc/source/cluster/doc_code/pytorch_training_e2e_submit.py -o pytorch_training_e2e_submit.py
+          if ! [ -f pytorch_training_e2e_submit.py ]; then
+            echo "ERROR: pytorch_training_e2e_submit.py file not found."
+          fi
+          # Submit the training job to your ray cluster
+          source /pw/.miniconda3/bin/activate
+          python3 pytorch_training_e2e_submit.py
+
+      - name: Wait for cancel
+        if: ${{inputs.deploy_ray_cluster == true }}
+        run: sleep inf
+'on':
+  execute:
+    inputs:
+      deploy_ray_cluster:
+        type: boolean
+        default: true
+        tooltip: Select Yes to deploy the service and No to enter a port for an existing service
+      service_port:
+        label: Service Port
+        type: number
+        hidden: ${{inputs.deploy_ray_cluster == true }}
+        ignore: ${{ .hidden }}
+      k8s:
+        type: group
+        label: Kubernetes
+        hidden: ${{inputs.deploy_ray_cluster == false }}
+        items:
+          cluster:
+            label: Kubernetes cluster
+            type: kubernetes-clusters
+            hidden: ${{inputs.deploy_ray_cluster == false }}
+            ignore: ${{ .hidden }}
+          namespace:
+            label: Namespace
+            type: kubernetes-namespaces
+            clusterName: ${{ inputs.k8s.cluster }}
+            hidden: ${{inputs.deploy_ray_cluster == false }}
+            ignore: ${{ .hidden }}
+          kuberay_version:
+            label: KubeRay Operator Version
+            type: string
+            default: 1.3.0
+            hidden: ${{inputs.deploy_ray_cluster == false }}
+            ignore: ${{ .hidden }}
+      prompts:
+        type: list
+        label: Prompt
+        template:
+          label: Prompt
+          type: editor
+          default: Futuristic hybrid computing control center with holographic dashboards displaying real-time AI training and simulations.
