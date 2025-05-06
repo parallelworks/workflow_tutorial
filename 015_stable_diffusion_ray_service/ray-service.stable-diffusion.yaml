@@ -57,6 +57,7 @@ spec:
       # Pod template
       template:
         spec:
+          #runtimeClassName: nvidia
           containers:
           - name: ray-worker
             image: rayproject/ray-ml:2.41.0.deprecated
