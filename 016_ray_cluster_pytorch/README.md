@@ -6,8 +6,7 @@ This workflow deploys a Ray Cluster on a Kubernetes cluster using the ACTIVATE p
 - 📄 The Ray Cluster configuration is defined in the ray-cluster.gpu.yaml file included in this workflow's directory.
 - 🖥️ The workflow automatically creates a port-forwarding session for the Ray Dashboard
 - 🔁 **Supports multiple job submissions:** Users can submit additional jobs while the workflow is running by using the workflow interface and specifying the port of the dashboard session.
-
-🧼 **Cleanup included:** When the workflow is terminated, it automatically uninstalls the KubeRay operator and the Ray Cluster, restoring the cluster to its original state.
+- 🧼 **Cleanup included:** When the workflow is terminated, it automatically uninstalls the KubeRay operator and the Ray Cluster, restoring the cluster to its original state.
 
 ## Usage
 1. **Deploy the Cluster:** Set `deploy_ray_cluster` to `true` to deploy a fresh Ray Cluster. 
