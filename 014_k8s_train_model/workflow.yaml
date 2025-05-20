@@ -61,6 +61,10 @@ jobs:
           set -xe
           trap './notify.sh apply-train-job 3' ERR
           model_save_path_dir=$(dirname ${{ inputs.model.save_path }})
+          if kubectl get runtimeclass nvidia &>/dev/null; then
+            echo "nvidia RuntimeClass is available"
+            runtimeClassName="runtimeClassName: nvidia"
+          fi
           # Create train-job.yaml configuration
           cat > train-job.yaml <<HERE
           apiVersion: batch/v1
@@ -70,7 +74,7 @@ jobs:
           spec:
             template:
               spec:
-                runtimeClassName: nvidia
+                ${runtimeClassName}
                 containers:
                 - name: trainer
                   image: pytorch/pytorch:2.0.1-cuda11.7-cudnn8-runtime
