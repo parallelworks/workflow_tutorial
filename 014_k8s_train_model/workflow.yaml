@@ -271,9 +271,10 @@ jobs:
             label: PyTorch image
             type: string
             default: pytorch/pytorch:2.0.1-cuda11.7-cudnn8-runtime
-            tooltip: Choose an image compatible with the GPU architecture and CUDA version of your system. Ensure the PyTorch image supports your GPU's compute capability (e.g., sm_90 for NVIDIA H100). See some samples below
-              - pytorch/pytorch:2.0.1-cuda11.7-cudnn8-runtime (supports sm_37, sm_50, sm_60, sm_61, sm_70, sm_75, sm_80, sm_86)
-              - pytorch/pytorch:2.1.0-cuda12.1-cudnn8-runtime (supports sm_37, sm_50, sm_60, sm_61, sm_70, sm_75, sm_80, sm_86, sm_90)
+            tooltip: |
+              Choose an image compatible with the GPU architecture and CUDA version of your system. Ensure the PyTorch image supports your GPU's compute capability (e.g., sm_90 for NVIDIA H100). See some samples below
+                - pytorch/pytorch:2.0.1-cuda11.7-cudnn8-runtime (supports sm_37, sm_50, sm_60, sm_61, sm_70, sm_75, sm_80, sm_86)
+                - pytorch/pytorch:2.1.0-cuda12.1-cudnn8-runtime (supports sm_37, sm_50, sm_60, sm_61, sm_70, sm_75, sm_80, sm_86, sm_90)
           gpu_limit:
             label: GPU Limit
             type: number
