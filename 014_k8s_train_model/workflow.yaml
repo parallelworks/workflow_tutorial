@@ -29,7 +29,7 @@ jobs:
         run: |
           job_number=$(pwd | rev | cut -d "/" -f1 | rev)
           echo "export job_number=${job_number}" > job.info
-          workflow_name=$(pwd | rev | cut -d "/" -f2 | rev | tr '_' '')
+          workflow_name=$(pwd | rev | cut -d "/" -f2 | rev | tr '_' '-')
           echo "export workflow_name=${workflow_name}" >> job.info
           job_id="${PW_USER}-${workflow_name}-${job_number}-$(date +%s)"
           echo "job_id=${job_id}" | tee -a $OUTPUTS
