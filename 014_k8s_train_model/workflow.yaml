@@ -1,7 +1,23 @@
 permissions:
   - '*'
 jobs:
+  prepare_job_directory:
+    steps:
+      - name: Prepare job directory
+        run: | 
+          # Check if directory exists
+          if [ -d "014_k8s_train_model" ]; then
+              # Move all contents to current directory
+              mv 014_k8s_train_model/* .
+              # Remove the directory
+              rmdir 014_k8s_train_model
+              echo "Directory contents moved and directory deleted"
+          else
+              echo "Directory 014_k8s_train_model does not exist"
+          fi
   auth:
+    needs:
+      - prepare_job_directory
     steps:
       - name: Authenticate kubectl
         run: pw kube auth ${{ inputs.k8s.cluster }}
