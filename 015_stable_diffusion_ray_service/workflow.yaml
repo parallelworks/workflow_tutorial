@@ -93,6 +93,7 @@ jobs:
           head_pod_name=$(kubectl get pods -n ${{ inputs.k8s.namespace }} -l ray.io/node-type=head -o jsonpath="{.items[0].metadata.name}")
           echo "head_pod_name=${head_pod_name}" | tee -a $OUTPUTS
       - name: Create session for dashboard
+        if: ${{inputs.deploy_ray_service == true }}
         uses: parallelworks/update-session
         with:
           remotePort: '8265'
