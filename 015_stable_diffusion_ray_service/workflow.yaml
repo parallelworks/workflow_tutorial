@@ -110,6 +110,7 @@ jobs:
           service_port=$(pw agent open-port)
           echo "service_port=${service_port}" | tee -a $OUTPUTS
       - name: Create Session for Service
+        if: ${{inputs.deploy_ray_service == true }}
         uses: parallelworks/update-session
         with:
           remotePort: '8000'
