@@ -10,7 +10,7 @@ This workflow deploys a RayService on a Kubernetes cluster using the ACTIVATE pl
   - Another to expose the Ray Serve endpoint, allowing users to submit prompts to the Stable Diffusion model interactively.
 - 🔁 **Supports interactive prompts:** Users can submit additional prompts while the workflow is running by using the workflow interface and specifying the correct service port.
 
-🧼 **Cleanup included:** When the workflow is terminated, it automatically uninstalls the KubeRay operator and the RayService, restoring the cluster to its original state.
+- 🧼 **Cleanup included:** When the workflow is terminated, it automatically uninstalls the KubeRay operator and the RayService, restoring the cluster to its original state.
 
 ## Usage
 1. **Deploy the Service:** Set deploy_ray_service to true to deploy a fresh RayService instance. 
