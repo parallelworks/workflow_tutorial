@@ -33,10 +33,10 @@ jobs:
       - name: Compiling App
         run: ssh -o StrictHostKeyChecking=no ${{ inputs.resource.ip }} 'bash -s' < ./compile.sh
       - name: Run App in Controller Node
-        if: ${{ inputs.jobschedulertype === CONTROLLER }}
+        if: ${{ inputs.jobschedulertype == CONTROLLER }}
         run: ssh -o StrictHostKeyChecking=no ${{ inputs.resource.ip }} ~/${PWD/#$HOME/}/run.sh
       - name: Submit App to SLURM Partition
-        if: ${{ inputs.jobschedulertype === SLURM }}
+        if: ${{ inputs.jobschedulertype == SLURM }}
         run: |
           jobid=$(ssh -o StrictHostKeyChecking=no ${{ inputs.resource.ip }} sbatch ~/${PWD/#$HOME/}/run.sh  | tail -1 | awk -F ' ' '{print $4}')
           # Check if jobid is empty and exit with error if true
@@ -46,7 +46,7 @@ jobs:
           fi
           echo jobid=${jobid} >> $OUTPUTS
       - name: Submit App to PBS Queue
-        if: ${{ inputs.jobschedulertype === PBS }}
+        if: ${{ inputs.jobschedulertype == PBS }}
         run: |
           jobid=$(ssh -o StrictHostKeyChecking=no ${{ inputs.resource.ip }} qsub ~/${PWD/#$HOME/}/run.sh)
           # Check if jobid is empty and exit with error if true
@@ -59,7 +59,7 @@ jobs:
         env:
           sshcmd: ssh -o StrictHostKeyChecking=no ${{ inputs.resource.ip }}
           jobid: ${{ needs.main.outputs.jobid }}
-        if: ${{ inputs.wait_for_job === true && inputs.jobschedulertype === SLURM }}
+        if: ${{ inputs.wait_for_job == true && inputs.jobschedulertype == SLURM }}
         run: |
 
           get_slurm_job_status() {
@@ -97,7 +97,7 @@ jobs:
         env:
           sshcmd: ssh -o StrictHostKeyChecking=no ${{ inputs.resource.ip }}
           jobid: ${{ needs.main.outputs.jobid }}
-        if: ${{ inputs.wait_for_job === true && inputs.jobschedulertype === PBS }}
+        if: ${{ inputs.wait_for_job == true && inputs.jobschedulertype == PBS }}
         run: |
 
           get_pbs_job_status() {
@@ -170,13 +170,13 @@ jobs:
         label: Type the scheduler directives
         type: editor
         default: '#!/bin/bash'
-        hidden: ${{ inputs.jobschedulertype === CONTROLLER }}
+        hidden: ${{ inputs.jobschedulertype == CONTROLLER }}
         optional: ${{.hidden}}
       wait_for_job:
         label: Wait for the PBS job or fire and forget?
         type: boolean
         default: true
-        hidden: ${{ inputs.jobschedulertype === CONTROLLER }}
+        hidden: ${{ inputs.jobschedulertype == CONTROLLER }}
         ignore: ${{ .hidden }}
         optional: ${{ .hidden }}
         tooltip: If yes is selected, the PW job waits for the SLURM or PBS job to complete while continuously monitoring its status and the possibility to cancel the SLURM or PBS job when the PW job is canceled

@@ -2,7 +2,7 @@ jobs:
   main:
     steps:
       - name: Write Script
-        if: ${{ inputs.input_method === TEXT }}
+        if: ${{ inputs.input_method == TEXT }}
         run: |
           echo '${{ inputs.script_text }}' > script.sh
           chmod +x script.sh
@@ -13,7 +13,7 @@ jobs:
           echo "==========What resource info is provided by ACTIVATE?======="
           echo ${{ inputs.resource }}
       - name: Transfer Script to Cluster
-        if: ${{  inputs.input_method === TEXT || inputs.input_method === WORKSPACE_PATH }}
+        if: ${{  inputs.input_method == TEXT || inputs.input_method == WORKSPACE_PATH }}
         run: |
           echo Set workdir on cluster home to match user workspace launch directory
           echo User workspace launch directory is ${PWD}
@@ -31,13 +31,13 @@ jobs:
           ssh -o StrictHostKeyChecking=no ${{ inputs.resource.ip }} chmod u+x -v ${workdir}/script.sh
           echo Done, ready to move to the next step.
       - name: Run Script in Controller Node
-        if: ${{ inputs.jobschedulertype === CONTROLLER }}
+        if: ${{ inputs.jobschedulertype == CONTROLLER }}
         run: |
           resource_home=$(ssh -o StrictHostKeyChecking=no ${{ inputs.resource.ip }} 'echo $HOME')
           workdir=${resource_home}${PWD/#$HOME/}
           ssh -o StrictHostKeyChecking=no ${{ inputs.resource.ip }} ${workdir}/script.sh
       - name: Submit Script to SLURM Partition
-        if: ${{ inputs.jobschedulertype === SLURM }}
+        if: ${{ inputs.jobschedulertype == SLURM }}
         run: |
           set -x
           resource_home=$(ssh -o StrictHostKeyChecking=no ${{ inputs.resource.ip }} 'echo $HOME')
@@ -50,7 +50,7 @@ jobs:
           fi
           echo jobid=${jobid} >> $OUTPUTS
       - name: Submit Script to PBS Queue
-        if: ${{ inputs.jobschedulertype === PBS }}
+        if: ${{ inputs.jobschedulertype == PBS }}
         run: |
           resource_home=$(ssh -o StrictHostKeyChecking=no ${{ inputs.resource.ip }} 'echo $HOME')
           workdir=${resource_home}${PWD/#$HOME/}
@@ -65,7 +65,7 @@ jobs:
         env:
           sshcmd: ssh -o StrictHostKeyChecking=no ${{ inputs.resource.ip }}
           jobid: ${{ needs.main.outputs.jobid }}
-        if: ${{ inputs.wait_for_job === true && inputs.jobschedulertype === SLURM }}
+        if: ${{ inputs.wait_for_job == true && inputs.jobschedulertype == SLURM }}
         run: |
 
           get_slurm_job_status() {
@@ -103,7 +103,7 @@ jobs:
         env:
           sshcmd: ssh -o StrictHostKeyChecking=no ${{ inputs.resource.ip }}
           jobid: ${{ needs.main.outputs.jobid }}
-        if: ${{ inputs.wait_for_job === true && inputs.jobschedulertype === PBS }}
+        if: ${{ inputs.wait_for_job == true && inputs.jobschedulertype == PBS }}
         run: |
 
           get_pbs_job_status() {
@@ -161,7 +161,7 @@ jobs:
         label: Wait for the PBS job or fire and forget?
         type: boolean
         default: true
-        hidden: ${{ inputs.jobschedulertype === CONTROLLER }}
+        hidden: ${{ inputs.jobschedulertype == CONTROLLER }}
         ignore: ${{ .hidden }}
         optional: ${{ .hidden }}
         tooltip: If yes is selected, the PW job waits for the SLURM or PBS job to complete while continuously monitoring its status and the possibility to cancel the SLURM or PBS job when the PW job is canceled
